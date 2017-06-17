@@ -23,6 +23,7 @@
 
 (defvar myPackages
   '(better-defaults
+    ivy
     helm
     helm-projectile
     ein
@@ -76,11 +77,24 @@
 (require 'neotree)
 (global-set-key [f8] 'neotree-toggle)
 (setq neo-smart-open t)
-(setq projectile-switch-project-action 'neotree-projectile-action)
+;; (setq projectile-switch-project-action 'neotree-projectile-action)
 ;; full path of the buffer
 (setq frame-title-format
       (list (format "%s %%S: %%j " (system-name))
         '(buffer-file-name "%f" (dired-directory dired-directory "%b"))))
+(require 'helm-swoop)
+ ;; scroll one line at a time (less "jumpy" than defaults)
+    
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil))) ;; one line at a time
+(setq scroll-conservatively 10000)
+;; (setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
+    
+(setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
+    
+(setq scroll-step 1) ;; keyboard scroll one line at a time
+(setq ring-bell-function 'ignore)
+(global-set-key (kbd "M-i") 'helm-swoop)
+(global-set-key (kbd "M-x") 'helm-M-x)
 ;; init.el ends here
 
 (custom-set-variables
@@ -88,6 +102,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(helm--remap-mouse-mode t)
  '(package-selected-packages (quote (helm-ag projectile material-theme better-defaults))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
