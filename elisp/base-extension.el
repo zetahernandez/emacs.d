@@ -71,6 +71,7 @@
 
 (use-package diff-hl
   :config
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   (global-diff-hl-mode))
 
 (use-package smartparens)
@@ -101,6 +102,5 @@
 (use-package yasnippet
   :config
   (yas-global-mode 1))
-
 
 (provide 'base-extension)
