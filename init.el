@@ -24,6 +24,7 @@
 (defvar myPackages
   '(better-defaults
     ivy
+    elpy
     helm
     helm-projectile
     ein
@@ -33,6 +34,7 @@
     magit
     github-browse-file
     neotree
+    multiple-cursors
     material-theme))
 
 (mapc #'(lambda (package)
@@ -52,6 +54,7 @@
       `((".*" ,temporary-file-directory t)))
 
 (setq inhibit-startup-message t) ;; hide the startup message
+(tool-bar-mode -1) 
 (load-theme 'material t) ;; load material theme
 (global-linum-mode t) ;; enable line numbers globally
 
@@ -61,7 +64,9 @@
 (elpy-enable)
 (elpy-use-ipython)
 (projectile-global-mode)
-(setq elpy-rpc-backend "jedi")  
+(setq elpy-rpc-backend "jedi")
+(setq elpy-rpc-python-command "python3")
+(setq python-shell-interpreter "python3")
 
 (require 'helm-projectile)
 (helm-projectile-on)
@@ -95,6 +100,14 @@
 (setq ring-bell-function 'ignore)
 (global-set-key (kbd "M-i") 'helm-swoop)
 (global-set-key (kbd "M-x") 'helm-M-x)
+
+(require 'multiple-cursors)
+
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+
 ;; init.el ends here
 
 (custom-set-variables
@@ -103,7 +116,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(helm--remap-mouse-mode t)
- '(package-selected-packages (quote (helm-ag projectile material-theme better-defaults))))
+ '(package-selected-packages
+   (quote
+    (py-yapf multiple-cursors helm-ag projectile material-theme better-defaults))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
