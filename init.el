@@ -1,131 +1,34 @@
-;; init.el --- Emacs configuration
+;;; package --- Main init file
+;;; Commentary:
+;;; This is my init file
 
-;; INSTALL PACKAGES
-;; --------------------------------------
+;;; Code:
 
-(require 'package)
 
-(add-to-list 'load-path "~/.emacs.d/lisp/")
-
-(add-to-list 'package-archives
-             '("elpy" . "https://jorgenschaefer.github.io/packages/"))
-
-(add-to-list 'package-archives
-       '("melpa" . "http://melpa.org/packages/") t)
-
-(when (< emacs-major-version 24)
-  ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+;; Added by Package.el.  This must come before configurations of
+;; installed packages.  Don't delete this line.  If you don't want it,
+;; just comment it out by adding a semicolon to the start of the line.
+;; You may delete these explanatory comments.
 (package-initialize)
 
-(when (not package-archive-contents)
-  (package-refresh-contents))
+(add-to-list 'load-path (concat user-emacs-directory "elisp"))
 
-(defvar myPackages
-  '(better-defaults
-    ivy
-    elpy
-    helm
-    helm-projectile
-    ein
-    flycheck
-    helm-ls-git
-    diff-hl
-    magit
-    github-browse-file
-    neotree
-    multiple-cursors
-    material-theme))
-
-(mapc #'(lambda (package)
-    (unless (package-installed-p package)
-      (package-install package)))
-      myPackages)
-
-;; BASIC CUSTOMIZATION
-;; --------------------------------------
-;;Mac key mode
-(setq ns-right-alternate-modifier nil)
-
-;; If you don’t want to clutter up your file tree with Emacs’ backup files, you can save them to the system’s “temp” directory:
-(setq backup-directory-alist
-      `((".*" . ,temporary-file-directory)))
-(setq auto-save-file-name-transforms
-      `((".*" ,temporary-file-directory t)))
-
-(setq inhibit-startup-message t) ;; hide the startup message
-(tool-bar-mode -1) 
-(load-theme 'material t) ;; load material theme
-(global-linum-mode t) ;; enable line numbers globally
-
-;; git diff hl
-(global-diff-hl-mode)
-
-(elpy-enable)
-(elpy-use-ipython)
-(projectile-global-mode)
-(setq elpy-rpc-backend "jedi")
-(setq elpy-rpc-python-command "python3")
-(setq python-shell-interpreter "python3")
-
-(require 'helm-projectile)
-(helm-projectile-on)
-(setq projectile-completion-system 'helm)
-
-;; use flycheck not flymake with elpy
-(when (require 'flycheck nil t)
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (add-hook 'elpy-mode-hook 'flycheck-mode))
-
-(require 'helm-ls-git)
-;; Noetree config
-(require 'neotree)
-(global-set-key [f8] 'neotree-toggle)
-(setq neo-smart-open t)
-;; (setq projectile-switch-project-action 'neotree-projectile-action)
-;; full path of the buffer
-(setq frame-title-format
-      (list (format "%s %%S: %%j " (system-name))
-        '(buffer-file-name "%f" (dired-directory dired-directory "%b"))))
+(require 'base)
+(require 'base-extension)
+(require 'base-theme)
+(require 'base-global-keys)
 (require 'helm-swoop)
- ;; scroll one line at a time (less "jumpy" than defaults)
-    
-(setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil))) ;; one line at a time
-(setq scroll-conservatively 10000)
-;; (setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
-    
-(setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
-    
-(setq scroll-step 1) ;; keyboard scroll one line at a time
-(setq ring-bell-function 'ignore)
-(global-set-key (kbd "M-i") 'helm-swoop)
-(global-set-key (kbd "M-x") 'helm-M-x)
-
-(require 'multiple-cursors)
-
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-
-;; init.el ends here
-
+(require 'lang-python)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(helm--remap-mouse-mode t)
- '(package-selected-packages
-   (quote
-    (py-yapf multiple-cursors helm-ag projectile material-theme better-defaults))))
+ '(initial-buffer-choice (quote helm-recentf))
+ '(package-selected-packages (quote (elpy use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work righ
