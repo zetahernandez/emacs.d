@@ -1,3 +1,11 @@
+(use-package dashboard
+  :config
+  (setq dashboard-items '((recents  . 5)
+                        (bookmarks . 5)
+                        (projects . 5)
+                        (agenda . 5)))
+  (dashboard-setup-startup-hook))
+
 (use-package better-defaults)
 
 (use-package helm
@@ -35,6 +43,8 @@
   (setq linum-format " %3d ")
   (global-linum-mode nil))
 
+(use-package flycheck)
+
 (use-package magit
   :config
 
@@ -62,5 +72,35 @@
 (use-package diff-hl
   :config
   (global-diff-hl-mode))
+
+(use-package smartparens)
+
+(use-package smex)
+
+(use-package undo-tree
+  :config
+  ;; Remember undo history
+  (setq
+   undo-tree-auto-save-history nil
+   undo-tree-history-directory-alist `(("." . ,(concat temp-dir "/undo/"))))
+  (global-undo-tree-mode 1))
+
+(use-package which-key
+  :config
+  (which-key-mode))
+
+(use-package windmove
+  :bind
+  ("C-c <up>" . windmove-up)
+  ("C-c <down>" . windmove-down)
+  ("C-c <left>" . windmove-left)
+  ("C-c <right>" . windmove-right))
+
+(use-package wgrep)
+
+(use-package yasnippet
+  :config
+  (yas-global-mode 1))
+
 
 (provide 'base-extension)
