@@ -6,11 +6,22 @@
                         (agenda . 5)))
   (dashboard-setup-startup-hook))
 
+(use-package company
+  :config
+  (add-hook 'after-init-hook 'global-company-mode))
+
 (use-package better-defaults)
 
 (use-package helm
-  :bind
-  ("M-x" . helm-M-x))
+  :bind (("M-x" . helm-M-x)
+         ("C-x C-m" . helm-M-x)
+         ("C-x C-f" . helm-find-files)
+         ("C-x v" . helm-projectile)
+         ("C-x c o" . helm-occur)
+         ("C-x c p" . helm-projectile-ag)
+         ("C-x c k" . helm-show-kill-ring)
+         :map helm-map
+         ("<tab>" . helm-execute-persistent-action)))
 
 (use-package projectile
   :config
@@ -28,6 +39,10 @@
 (use-package helm-ag)
 
 (use-package helm-ls-git)
+
+(use-package helm-swoop
+  :bind
+  ("M-i" . helm-swoop))
 
 (use-package recentf
   :config

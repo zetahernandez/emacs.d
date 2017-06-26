@@ -17,8 +17,9 @@
 (require 'base-extension)
 (require 'base-theme)
 (require 'base-global-keys)
-(require 'helm-swoop)
 (require 'lang-python)
+(require 'lang-javascript)
+(require 'lang-web)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
