@@ -20,6 +20,10 @@
          ("C-x c o" . helm-occur)
          ("C-x c p" . helm-projectile-ag)
          ("C-x c k" . helm-show-kill-ring)
+         ("C-x f" . helm-recentf)
+         ("C-SPC" . helm-dabbrev)
+         ("M-y" . helm-show-kill-ring)
+         ("C-x b" . helm-buffers-list)
          :map helm-map
          ("<tab>" . helm-execute-persistent-action)))
 
@@ -117,5 +121,12 @@
 (use-package yasnippet
   :config
   (yas-global-mode 1))
+
+
+(use-package yaml-mode
+  :mode ("\\.ya?ml\\'" . yaml-mode))
+
+(use-package markdown-mode
+  :mode ("\\.md\\'" . markdown-mode))
 
 (provide 'base-extension)

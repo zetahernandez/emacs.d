@@ -8,14 +8,34 @@
                ("C-c C-l" . js-load-file-and-go)))
   :mode
   ("\\.js$" . js2-mode)
-  ("\\.json$" . js2-jsx-mode)
   :config
   (custom-set-variables '(js2-strict-inconsistent-return-warning nil))
   (custom-set-variables '(js2-strict-missing-semi-warning nil))
 
-  (setq js-indent-level 2)
-  (setq js2-indent-level 2)
-  (setq js2-basic-offset 2)
+  (require 'flycheck)
+
+  (setq js-indent-level 4)
+  (setq js2-indent-level 4)
+  (setq js2-basic-offset 4)
+  (setq-default
+   flycheck-disabled-checkers
+   (append flycheck-disabled-checkers
+           '(javascript-jshint)))
+  (add-hook 'js2-mode-hook 'flycheck-mode)
+
+  ;; use eslint with web-mode for jsx files
+  (flycheck-add-mode 'javascript-eslint 'js2-mode)
+
+  ;; customize flycheck temp file prefix
+  (setq-default flycheck-temp-prefix ".flycheck")
+
+  ;; disable json-jsonlist checking for json files
+  (setq-default flycheck-disabled-checkers
+  (append flycheck-disabled-checkers
+          '(json-jsonlist)))
+  (when (memq window-system '(mac ns))
+    (exec-path-from-shell-initialize))
+
 
   ;; tern :- IDE like features for javascript and completion
   ;; http://ternjs.net/doc/manual.html#emacs

@@ -50,5 +50,10 @@
         '(buffer-file-name "%f" (dired-directory dired-directory "%b"))))
 (setq ring-bell-function 'ignore)
 
+;; active Babel languages
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((sql . t)))
+;; add additional languages with '((language . t)))
 (provide 'base)
 ;;; end base.el file
