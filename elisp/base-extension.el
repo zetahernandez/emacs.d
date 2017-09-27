@@ -16,6 +16,7 @@
   :bind (("M-x" . helm-M-x)
          ("C-x C-m" . helm-M-x)
          ("C-x C-f" . helm-find-files)
+         ("C-x C-d" . helm-browse-project)
          ("C-x v" . helm-projectile)
          ("C-x c o" . helm-occur)
          ("C-x c p" . helm-projectile-ag)
