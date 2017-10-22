@@ -1,3 +1,5 @@
 /.mc-lists.el
 /eshell/history
 /eshell/lastdir
+/tramp
+/url/cookies

@@ -29,7 +29,11 @@
  '(js2-strict-missing-semi-warning nil)
  '(package-selected-packages
    (quote
-    (protobuf-mode py-isort exec-path-from-shell github-browse-file company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element elpy use-package))))
+    (elpy protobuf-mode py-isort exec-path-from-shell github-browse-file company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element use-package)))
+ '(restclient-inhibit-cookies t)
+ '(tls-program
+   (quote
+    ("gnutls-cli --insecure -p %p %h" "gnutls-cli --x509cafile %t -p %p %h" "gnutls-cli --x509cafile %t -p %p %h --protocols ssl3" "openssl s_client -connect %h:%p -no_ssl2 -ign_eof"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

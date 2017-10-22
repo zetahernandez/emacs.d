@@ -50,6 +50,8 @@
         '(buffer-file-name "%f" (dired-directory dired-directory "%b"))))
 (setq ring-bell-function 'ignore)
 
+(delete-selection-mode 1)
+
 ;; active Babel languages
 (org-babel-do-load-languages
  'org-babel-load-languages

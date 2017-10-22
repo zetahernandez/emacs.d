@@ -135,4 +135,6 @@
 
 (use-package docker)
 
+(use-package restclient)
+
 (provide 'base-extension)
