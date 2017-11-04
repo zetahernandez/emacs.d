@@ -1,5 +1,9 @@
-/.mc-lists.el
-/eshell/history
-/eshell/lastdir
-/tramp
-/url/cookies
+.mc-lists.el
+eshell/history
+eshell/lastdir
+tramp
+url/cookies
+backups/
+private/
+elpa/
+auto-save-list/
