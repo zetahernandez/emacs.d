@@ -12,8 +12,8 @@
     (add-to-list 'auto-mode-alist '("\\.py$" . python-mode))
     :config
     (setq elpy-rpc-backend "jedi")
-    ;; (setq elpy-rpc-python-command "python3")
-    ;; (setq python-shell-interpreter "python3")
+    (setq elpy-rpc-python-command "python")
+    (setq python-shell-interpreter "python")
     ;; use flycheck not flymake with elpy
     (when (require 'flycheck nil t)
       (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))

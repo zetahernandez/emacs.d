@@ -8,7 +8,6 @@
 (global-set-key (kbd "M-TAB") 'helm-recentf)
 (global-set-key (kbd "M-TAB") 'helm-recentf)
 
-
 (defun duplicate-current-line-or-region (arg)
   "Duplicates the current line or region ARG times.
 If there's no region, the current line will be duplicated. However, if
@@ -31,4 +30,6 @@ there's a region, all lines that region covers will be duplicated."
 
 (global-set-key (kbd "C-c d") 'duplicate-current-line-or-region)
 
+(define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
+(define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp)
 (provide 'base-global-keys)

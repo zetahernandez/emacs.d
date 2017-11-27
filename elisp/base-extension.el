@@ -26,7 +26,10 @@
          ("M-y" . helm-show-kill-ring)
          ("C-x b" . helm-buffers-list)
          :map helm-map
-         ("<tab>" . helm-execute-persistent-action)))
+         ("<tab>" . helm-execute-persistent-action))
+  :config
+  (setq helm-mode-fuzzy-match t)
+  (setq helm-M-x-fuzzy-match t))
 
 (use-package projectile
   :config
@@ -34,14 +37,24 @@
         (expand-file-name "projectile-bookmarks.eld" temp-dir))
 
   (setq projectile-completion-system 'helm)
+  (setq projectile-switch-project-action (lambda (&optional arg) (helm-browse-project arg)))
 
   (projectile-global-mode))
 
 (use-package helm-projectile
   :config
-  (helm-projectile-on))
+  (helm-projectile-on)
+  (setq helm-projectile-fuzzy-match nil))
 
-(use-package helm-ag)
+(use-package helm-ag
+  :bind
+  (("C-c p s r" . helm-do-ag-project-root))
+  :config
+  (setq helm-ag-base-command "rg --no-heading"))
+
+(use-package anzu
+  :config
+  (global-anzu-mode +1))
 
 (use-package helm-ls-git)
 
@@ -78,7 +91,8 @@
   ("C-x g p" . magit-push)
   ("C-x g u" . magit-pull)
   ("C-x g e" . magit-ediff-resolve)
-  ("C-x g r" . magit-rebase-interactive))
+  ("C-x g r" . magit-rebase-interactive)
+  ("C-x g l" . magit-log))
 
 (use-package magit-popup)
 
@@ -123,7 +137,6 @@
   :config
   (yas-global-mode 1))
 
-
 (use-package yaml-mode
   :mode ("\\.ya?ml\\'" . yaml-mode))
 
@@ -136,5 +149,9 @@
 (use-package docker)
 
 (use-package restclient)
+
+(use-package powerline
+  :config
+  (powerline-default-theme))
 
 (provide 'base-extension)
