@@ -1,10 +1,8 @@
-.mc-lists.el
-eshell/history
-eshell/lastdir
-tramp
-url/cookies
-backups/
-private/
-elpa/
-auto-save-list/
-/games
+# Ignore everything
+*
+
+# Except relevant configuration files
+!init.el
+!elisp
+!elisp/*
+!.gitignore
