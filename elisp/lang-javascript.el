@@ -14,13 +14,17 @@
 
   (require 'flycheck)
 
-  (setq js-indent-level 4)
-  (setq js2-indent-level 4)
-  (setq js2-basic-offset 4)
-  (setq-default
-   flycheck-disabled-checkers
-   (append flycheck-disabled-checkers
-           '(javascript-jshint)))
+  (setq js-indent-level 2)
+  (setq js2-indent-level 2)
+  (setq js2-basic-offset 2)
+  (setq-default flycheck-disabled-checkers
+                (append flycheck-disabled-checkers
+                        '(javascript-jshint)))
+
+  (setq-default flycheck-disabled-checkers
+                (append flycheck-disabled-checkers
+                        '(json-jsonlist)))
+
   (add-hook 'js2-mode-hook 'flycheck-mode)
 
   ;; use eslint with web-mode for jsx files
@@ -30,9 +34,6 @@
   (setq-default flycheck-temp-prefix ".flycheck")
 
   ;; disable json-jsonlist checking for json files
-  (setq-default flycheck-disabled-checkers
-  (append flycheck-disabled-checkers
-          '(json-jsonlist)))
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize))
 
