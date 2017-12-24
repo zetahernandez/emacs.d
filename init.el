@@ -21,6 +21,8 @@
 (require 'lang-javascript)
 (require 'lang-web)
 (require 'flycheck-js)
+;; (require 'elpy-eventbrite)
+(require 'python-functions)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -30,11 +32,15 @@
  '(custom-safe-themes
    (quote
     ("0bfe81f0ddc788922f718b3320991320fa46a7ac7723e5f98967192e8d0393f8" "5dc0ae2d193460de979a463b907b4b2c6d2c9c4657b2e9e66b8898d2592e3de5" default)))
+ '(helm-projectile-fuzzy-match nil)
+ '(initial-frame-alist (quote ((fullscreen . maximized))))
  '(js2-strict-inconsistent-return-warning nil)
  '(js2-strict-missing-semi-warning nil)
  '(package-selected-packages
    (quote
     (helm-spotify fiplr elpy protobuf-mode py-isort exec-path-from-shell github-browse-file company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element use-package)))
+ '(projectile-enable-caching t)
+ '(projectile-mode t nil (projectile))
  '(restclient-inhibit-cookies t)
  '(tls-program
    (quote
