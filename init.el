@@ -20,9 +20,14 @@
 (require 'lang-python)
 (require 'lang-javascript)
 (require 'lang-web)
+(require 'lang-php)
+(require 'lang-go)
+(require 'lang-haskell)
 (require 'flycheck-js)
-;; (require 'elpy-eventbrite)
+(require 'elpy-eventbrite)
 (require 'python-functions)
+(require 'gcalendar)
+(require 'org-mode-config)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -36,11 +41,16 @@
  '(initial-frame-alist (quote ((fullscreen . maximized))))
  '(js2-strict-inconsistent-return-warning nil)
  '(js2-strict-missing-semi-warning nil)
+ '(org-agenda-files
+   (quote
+    ("~/Dropbox/orgfiles/gcal.org" "~/Dropbox/orgfiles/i.org")))
+ '(org-support-shift-select t)
  '(package-selected-packages
    (quote
     (helm-spotify fiplr elpy protobuf-mode py-isort exec-path-from-shell github-browse-file company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element use-package)))
  '(projectile-enable-caching t)
  '(projectile-mode t nil (projectile))
+ '(py-isort-options nil)
  '(restclient-inhibit-cookies t)
  '(tls-program
    (quote

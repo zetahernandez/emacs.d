@@ -1,7 +1,7 @@
 (package-initialize)
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives '("elpy" . "http://jorgenschaefer.github.io/packages/"))
+;; (add-to-list 'package-archives '("elpy" . "http://jorgenschaefer.github.io/packages/"))
 
 (when (not package-archive-contents)
   (package-refresh-contents))
@@ -52,10 +52,5 @@
 
 (delete-selection-mode 1)
 
-;; active Babel languages
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((sql . t)))
-;; add additional languages with '((language . t)))
 (provide 'base)
 ;;; end base.el file

@@ -14,9 +14,9 @@
 
   (require 'flycheck)
 
-  (setq js-indent-level 2)
-  (setq js2-indent-level 2)
-  (setq js2-basic-offset 2)
+  (setq js-indent-level 4)
+  (setq js2-indent-level 4)
+  (setq js2-basic-offset 4)
   (setq-default flycheck-disabled-checkers
                 (append flycheck-disabled-checkers
                         '(javascript-jshint)))

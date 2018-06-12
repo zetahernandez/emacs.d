@@ -6,3 +6,4 @@
 !elisp
 !elisp/*
 !.gitignore
+elisp/elpy-eventbrite.el

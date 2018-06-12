@@ -150,6 +150,12 @@
 
 (use-package restclient)
 
+(use-package ob-restclient)
+
+(use-package ox-rst)
+
+(use-package py-isort)
+
 (use-package powerline
   :config
   (powerline-default-theme))

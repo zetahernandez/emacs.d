@@ -32,4 +32,5 @@ there's a region, all lines that region covers will be duplicated."
 
 (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
 (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp)
+
 (provide 'base-global-keys)
