@@ -17,6 +17,8 @@
   (setq js-indent-level 4)
   (setq js2-indent-level 4)
   (setq js2-basic-offset 4)
+  (setq sgml-basic-offset 4)
+
   (setq-default flycheck-disabled-checkers
                 (append flycheck-disabled-checkers
                         '(javascript-jshint)))

@@ -23,7 +23,7 @@
 	 "* %?\n%i\n")))
 
 (setq org-ditaa-jar-path "~/git/org-mode/contrib/scripts/ditaa.jar")
-(setq org-plantuml-jar-path "~/Downloads/plantuml.jar")
+(setq org-plantuml-jar-path "~/Dropbox/plantuml.jar")
 
 (add-hook 'org-babel-after-execute-hook 'bh/display-inline-images 'append)
 

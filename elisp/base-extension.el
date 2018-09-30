@@ -18,7 +18,8 @@
          ("C-x C-f" . helm-find-files)
          ("C-x C-d" . helm-browse-project)
          ("C-x v" . helm-projectile)
-         ("C-x c o" . helm-occur)
+         ("C-s"     . helm-occur)
+         ("C-r"     . helm-occur)
          ("C-x c p" . helm-projectile-ag)
          ("C-x c k" . helm-show-kill-ring)
          ("C-x f" . helm-recentf)
@@ -28,14 +29,24 @@
          :map helm-map
          ("<tab>" . helm-execute-persistent-action))
   :config
-  (setq helm-mode-fuzzy-match t)
-  (setq helm-M-x-fuzzy-match t))
+  ;; open helm buffer inside current window, don't occupy the entire other window
+  (setq helm-split-window-in-side-p t)
+  (setq helm-recentf-fuzzy-match t
+      helm-locate-fuzzy-match nil ;; locate fuzzy is worthless
+      helm-M-x-fuzzy-match t
+      helm-buffers-fuzzy-matching t
+      helm-semantic-fuzzy-match t
+      helm-apropos-fuzzy-match t
+      helm-imenu-fuzzy-match t
+      helm-lisp-fuzzy-completion t
+      helm-completion-in-region-fuzzy-match t))
 
 (use-package projectile
   :config
   (setq projectile-known-projects-file
         (expand-file-name "projectile-bookmarks.eld" temp-dir))
 
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (setq projectile-completion-system 'helm)
   (setq projectile-switch-project-action (lambda (&optional arg) (helm-browse-project arg)))
 
@@ -47,20 +58,15 @@
   (setq helm-projectile-fuzzy-match nil))
 
 (use-package helm-ag
-  :bind
-  (("C-c p s r" . helm-do-ag-project-root))
   :config
-  (setq helm-ag-base-command "rg --no-heading"))
+  (setq helm-ag-base-command "rg --no-heading")
+  (bind-key* "C-c p s r" 'helm-do-ag-project-root))
 
 (use-package anzu
   :config
   (global-anzu-mode +1))
 
 (use-package helm-ls-git)
-
-(use-package helm-swoop
-  :bind
-  ("M-i" . helm-swoop))
 
 (use-package recentf
   :config
@@ -141,7 +147,12 @@
   :mode ("\\.ya?ml\\'" . yaml-mode))
 
 (use-package markdown-mode
-  :mode ("\\.md\\'" . markdown-mode))
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
 
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode))
@@ -159,5 +170,8 @@
 (use-package powerline
   :config
   (powerline-default-theme))
+
+(use-package apib-mode
+  :mode ("\\.apib\\'" . apib-mode))
 
 (provide 'base-extension)
