@@ -62,10 +62,6 @@
   (setq helm-ag-base-command "rg --no-heading")
   (bind-key* "C-c p s r" 'helm-do-ag-project-root))
 
-(use-package anzu
-  :config
-  (global-anzu-mode +1))
-
 (use-package helm-ls-git)
 
 (use-package recentf

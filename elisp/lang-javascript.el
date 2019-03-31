@@ -7,7 +7,7 @@
                ("C-c C-b" . js-send-buffer-and-go)
                ("C-c C-l" . js-load-file-and-go)))
   :mode
-  ("\\.js$" . js2-mode)
+  ("\\.js$" . rjsx-mode)
   :config
   (custom-set-variables '(js2-strict-inconsistent-return-warning nil))
   (custom-set-variables '(js2-strict-missing-semi-warning nil))
@@ -52,6 +52,7 @@
     (add-hook 'js2-mode-hook 'company-mode))
 
   (add-hook 'js2-mode-hook 'tern-mode)
+  (add-hook 'js2-mode-hook 'whitespace-mode)
 
   ;; company backend for tern
   ;; http://ternjs.net/doc/manual.html#emacs
@@ -65,7 +66,7 @@
 
   ;; js2-refactor :- refactoring options for emacs
   ;; https://github.com/magnars/js2-refactor.el
-  (use-package js2-refactor :defer t
+  (use-package js2-refactor
     :diminish js2-refactor-mode
     :config
     (js2r-add-keybindings-with-prefix "C-c j r"))
