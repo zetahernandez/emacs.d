@@ -18,7 +18,7 @@
 
     (setq python-shell-interpreter "ipython3"
       python-shell-interpreter-args "-i")
-
+    ;; (add-hook 'python-mode-hook #'lsp)
     ;; use flymake on emacs 26.1
     ;; use flycheck not flymake with elpy
     ;; (when (require 'flycheck nil t)

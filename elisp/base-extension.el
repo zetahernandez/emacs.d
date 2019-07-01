@@ -170,4 +170,62 @@
 (use-package apib-mode
   :mode ("\\.apib\\'" . apib-mode))
 
+(use-package dimmer
+  :unless noninteractive
+  :defer 10
+  :config
+  ;; Don't dim hydra and transient buffers
+  (setq dimmer-exclusion-regexp "^\*helm.*\\|^ \*Minibuf-.*\\|^ \*Echo.*")
+  (setq dimmer-fraction 0.25)
+  ;;(setq dimmer-use-colorspace ':rgb)
+  (dimmer-mode))
+
+(use-package beacon
+  :defer 5
+  :config (beacon-mode 1))
+
+(use-package volatile-highlights
+  :defer 10
+  :config (volatile-highlights-mode t))
+
+(use-package fill-column-indicator
+  :hook ((emacs-lisp git-commit-setup) . fci-mode))
+
+(use-package copy-as-format
+  :bind (:map mode-specific-map
+         :prefix-map copy-as-format-prefix-map
+         :prefix "w"
+         ("w" . copy-as-format)
+         ("g" . copy-as-format-github)
+         ("h" . copy-as-format-hipchat-pidgin)
+         ("j" . copy-as-format-jira)
+         ("m" . copy-as-format-markdown)
+         ("o" . copy-as-format-org-mode)
+         ("r" . copy-as-format-rst)
+         ("s" . copy-as-format-slack)
+         ("v" . org-copy-visible))
+  :config
+  ;; (setq copy-as-format-default "slack")
+  ;; Define own format since pidgin doesn't allow to begin a message with `/code'
+  (defun copy-as-format--hipchat-pidgin (text _multiline)
+    (format "/say /code %s" text))
+  (add-to-list 'copy-as-format-format-alist '("hipchat-pidgin" copy-as-format--hipchat-pidgin))
+  (defun copy-as-format-hipchat-pidgin ()
+    (interactive)
+    (setq copy-as-format-default "hipchat-pidgin")
+    (copy-as-format)))
+
+(use-package move-text
+  :bind (([(meta shift up)]      . move-text-up)
+         ([(meta shift down)]    . move-text-down)))
+
+(use-package restclient-helm
+  :disabled t
+  :after (restclient helm))
+
+(use-package kubernetes
+  :ensure t
+  :commands (kubernetes-overview))
+
+
 (provide 'base-extension)

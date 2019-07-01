@@ -39,7 +39,6 @@
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize))
 
-
   ;; tern :- IDE like features for javascript and completion
   ;; http://ternjs.net/doc/manual.html#emacs
   (use-package tern
@@ -53,7 +52,7 @@
 
   (add-hook 'js2-mode-hook 'tern-mode)
   (add-hook 'js2-mode-hook 'whitespace-mode)
-
+  (setq whitespace-line-column 121)
   ;; company backend for tern
   ;; http://ternjs.net/doc/manual.html#emacs
   (use-package company-tern)

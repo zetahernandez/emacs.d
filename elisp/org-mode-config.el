@@ -24,6 +24,7 @@
 
 (setq org-ditaa-jar-path "~/git/org-mode/contrib/scripts/ditaa.jar")
 (setq org-plantuml-jar-path "~/Dropbox/plantuml.jar")
+(setq org-log-done 'time)
 
 (add-hook 'org-babel-after-execute-hook 'bh/display-inline-images 'append)
 
@@ -56,5 +57,6 @@
 (add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
 ;; ;; add additional languages with '((language . t)))
 
+(global-set-key (kbd "C-c a") 'org-agenda)
 
 (provide 'org-mode-config)
