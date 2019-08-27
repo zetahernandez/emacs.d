@@ -62,17 +62,21 @@
   (require 'hydra)
   (require 'helm)
   (require 'helm-lsp)
+
   (setq lsp-clients-clangd-args '("-j=4" "-background-index" "-log=error"))
   (setq lsp-prefer-flymake nil) ;; Prefer using lsp-ui (flycheck) over flymake.
+  (setq lsp-pyls-plugins-pylint-enabled nil)
+  (setq lsp-pyls-plugins-pycodestyle-enabled nil)
+  (setq-default lsp-pyls-configuration-sources ["flake8"])
 
   (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
   ;; get lsp-python-enable defined
   ;; NB: use either projectile-project-root or ffip-get-project-root-directory
   ;;     or any other function that can be used to find the root directory of a project
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "pyls")
-                    :major-modes '(python-mode)
-                    :server-id 'pyls))
+  ;; (lsp-register-client
+  ;;  (make-lsp-client :new-connection (lsp-stdio-connection "pyls")
+  ;;                   :major-modes '(python-mode)
+  ;;                   :server-id 'pyls))
   ;; make sure this is activated when python-mode is activated
   ;; lsp-python-enable is created by macro above
   (add-hook 'python-mode-hook #'lsp)
@@ -158,19 +162,14 @@
     ;; Disable client-side cache because the LSP server does a better job.
     (setq company-transformers nil
           company-lsp-async t
-          company-lsp-cache-candidates nil))
-  ;; NB: only required if you prefer flake8 instead of the default
-  ;; send pyls config via lsp-after-initialize-hook -- harmless for
-  ;; other servers due to pyls key, but would prefer only sending this
-  ;; when pyls gets initialised (:initialize function in
-  ;; lsp-define-stdio-client is invoked too early (before server
-  ;; start)) -- cpbotha
-  (defun lsp-set-cfg ()
-    (let ((lsp-cfg `(:pyls (:configurationSources ("flake8")))))
-      ;; TODO: check lsp--cur-workspace here to decide per server / project
-      (lsp--set-configuration lsp-cfg)))
+          company-lsp-cache-candidates nil)))
 
-  (add-hook 'lsp-after-initialize-hook 'lsp-set-cfg))
+(use-package dap-mode
+  :defer    t
+  :config
+  (setq dap-python-executable "python3")
+  ;; (setq dap-python-default-debug-port 5678)
+  (require 'dap-python))
 
 (provide 'lang-python)
 ;;; base-python.el ends here
