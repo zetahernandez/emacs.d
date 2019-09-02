@@ -88,6 +88,7 @@
   :bind
   ;; Magic
   ("C-x g s" . magit-status)
+  ("C-x g b" . magit-blame)
   ("C-x g x" . magit-checkout)
   ("C-x g c" . magit-commit)
   ("C-x g p" . magit-push)
@@ -169,16 +170,6 @@
 
 (use-package apib-mode
   :mode ("\\.apib\\'" . apib-mode))
-
-(use-package dimmer
-  :unless noninteractive
-  :defer 10
-  :config
-  ;; Don't dim hydra and transient buffers
-  (setq dimmer-exclusion-regexp "^\*helm.*\\|^ \*Minibuf-.*\\|^ \*Echo.*")
-  (setq dimmer-fraction 0.25)
-  ;;(setq dimmer-use-colorspace ':rgb)
-  (dimmer-mode))
 
 (use-package beacon
   :defer 5

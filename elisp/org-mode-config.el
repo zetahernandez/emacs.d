@@ -1,5 +1,7 @@
 (global-set-key (kbd "C-c c")
                 'org-capture)
+(global-set-key [(meta shift up)]  'move-line-up)
+(global-set-key [(control shift down)]  'move-line-down)
 
 (setq org-agenda-files (list "~/Dropbox/orgfiles/gcal.org"
 			     "~/Dropbox/orgfiles/i.org"
@@ -23,8 +25,9 @@
 	 "* %?\n%i\n")))
 
 (setq org-ditaa-jar-path "~/git/org-mode/contrib/scripts/ditaa.jar")
-(setq org-plantuml-jar-path "~/Dropbox/plantuml.jar")
 (setq org-log-done 'time)
+(setq org-plantuml-jar-path
+      (expand-file-name "~/.emacs.d/plantuml.jar"))
 
 (add-hook 'org-babel-after-execute-hook 'bh/display-inline-images 'append)
 

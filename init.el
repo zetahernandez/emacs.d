@@ -42,14 +42,13 @@
  '(initial-frame-alist (quote ((fullscreen . maximized))))
  '(js2-strict-inconsistent-return-warning nil)
  '(js2-strict-missing-semi-warning nil)
- '(markdown-command "pandoc" t)
- '(org-agenda-files
-   (quote
-    ("~/Dropbox/orgfiles/gcal.org" "~/Dropbox/orgfiles/i.org")))
+ '(markdown-command "pandoc")
+ '(org-agenda-files nil)
  '(org-support-shift-select t)
  '(package-selected-packages
    (quote
-    (rjsx-mode blacken js2-refactor js-comint company-tern tern apib-mode wgrep-helm helm-swoop swoop helm-rg helm-spotify fiplr elpy protobuf-mode py-isort exec-path-from-shell github-browse-file company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element use-package)))
+    (plantuml-mode kubernetes helm-ag helm-tramp rjsx-mode blacken js2-refactor js-comint company-tern tern apib-mode wgrep-helm helm-swoop swoop helm-spotify fiplr elpy protobuf-mode py-isort exec-path-from-shell github-browse-file company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element use-package)))
+ '(plantuml-jar-path "~/.emacs.d/plantuml.jar")
  '(projectile-enable-caching t)
  '(projectile-mode t nil (projectile))
  '(py-isort-options nil)
@@ -63,5 +62,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+
 (put 'downcase-region 'disabled nil)
