@@ -3,6 +3,7 @@
 2. [Emacs - Elpy](#emacs---elpy)
 3. [Rest Client](#rest-client)
 4. [UML diagrams](#uml-diagrams)
+5. [Treemacs](#treemacs)
 
 
 # Emacs Commands
@@ -204,3 +205,14 @@ Dummy -- Flight
 - Press `C-c C-c` and you should have a **Class diagram** in `class.png`
 
 To know more about `plantuml class diagrams` syntax: http://plantuml.com/class-diagram
+
+# Treemacs
+If you want to have your emacs with file tree, like this:
+![Treemacs example](https://raw.githubusercontent.com/Alexander-Miller/treemacs/master/screenshots/screenshot.png)
+- Init `treemacs` `C-x t t`
+You can press `?` inside `treemacs` buffer and it will show a list of commands.
+- `C-c C-p p` to add new projects with projectile
+- `n/p` to navigate between projects
+- `q` to close `treemacs`
+- `TAB/RET` to open project
+More info: https://github.com/Alexander-Miller/treemacs
