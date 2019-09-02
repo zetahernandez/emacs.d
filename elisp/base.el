@@ -3,6 +3,7 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 ;; (add-to-list 'package-archives '("elpy" . "http://jorgenschaefer.github.io/packages/"))
 
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 (package-refresh-contents)
 
 (when (not package-archive-contents)
