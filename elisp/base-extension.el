@@ -175,15 +175,15 @@
 (use-package apib-mode
   :mode ("\\.apib\\'" . apib-mode))
 
-(use-package dimmer
-  :unless noninteractive
-  :defer 10
-  :config
-  ;; Don't dim hydra and transient buffers
-  (setq dimmer-exclusion-regexp "^\*helm.*\\|^ \*Minibuf-.*\\|^ \*Echo.*")
-  (setq dimmer-fraction 0.25)
-  ;;(setq dimmer-use-colorspace ':rgb)
-  (dimmer-mode))
+;; (use-package dimmer
+;;   :unless noninteractive
+;;   :defer 10
+;;   :config
+;;   ;; Don't dim hydra and transient buffers
+;;   (setq dimmer-exclusion-regexp "^\*helm.*\\|^ \*Minibuf-.*\\|^ \*Echo.*")
+;;   (setq dimmer-fraction 0.25)
+;;   ;;(setq dimmer-use-colorspace ':rgb)
+;;   (dimmer-mode))
 
 (use-package beacon
   :defer 5
@@ -309,5 +309,10 @@
   :after treemacs magit
   :ensure t)
 
+(use-package indent-tools
+  :ensure t
+  :bind
+
+  ("C-c /" . indent-tools-hydra/body))
 
 (provide 'base-extension)
