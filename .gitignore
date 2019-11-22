@@ -4,6 +4,7 @@
 # Except relevant configuration files
 !README.md
 !init.el
+!main.org
 !elisp
 !elisp/*
 !.gitignore

@@ -1,67 +1,37 @@
-;;; package --- Main init file
+;;; Package --- Summary
+
 ;;; Commentary:
-;;; This is my init file
+;; Emacs init file responsible for either loading a pre-compiled configuration
+;; file or tangling and loading a literate org configuration file.
 
-;;; Code:
+;; Don't attempt to find/apply special file handlers to files loaded during
+;; startup.
+(let ((file-name-handler-alist nil))
+  ;; If config is pre-compiled, then load that
+  (if (file-exists-p (expand-file-name "main.elc" user-emacs-directory))
+      (load-file (expand-file-name "main.elc" user-emacs-directory))
+    ;; Otherwise use org-babel to tangle and load the configuration
+    (require 'org)
+    (org-babel-load-file (expand-file-name "main.org" user-emacs-directory))))
 
-
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
-(package-initialize)
-
-(add-to-list 'load-path (concat user-emacs-directory "elisp"))
-
-(require 'base)
-(require 'base-extension)
-(require 'base-theme)
-(require 'base-global-keys)
-(require 'lang-python)
-(require 'lang-javascript)
-(require 'lang-web)
-(require 'lang-php)
-(require 'lang-go)
-(require 'lang-haskell)
-(require 'flycheck-js)
-(require 'flymake-mypy)
-;; (require 'elpy-eventbrite)
-(require 'python-functions)
-(require 'gcalendar)
-(require 'org-mode-config)
+;;; init.el ends here
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(async-bytecomp-package-mode t)
  '(custom-safe-themes
    (quote
-    ("0bfe81f0ddc788922f718b3320991320fa46a7ac7723e5f98967192e8d0393f8" "5dc0ae2d193460de979a463b907b4b2c6d2c9c4657b2e9e66b8898d2592e3de5" default)))
- '(helm-projectile-fuzzy-match nil)
- '(initial-frame-alist (quote ((fullscreen . maximized))))
+    ("a24c5b3c12d147da6cef80938dca1223b7c7f70f2f382b26308eba014dc4833a" "732b807b0543855541743429c9979ebfb363e27ec91e82f463c91e68c772f6e3" default)))
  '(js2-strict-inconsistent-return-warning nil)
  '(js2-strict-missing-semi-warning nil)
- '(markdown-command "pandoc" t)
- '(org-agenda-files
-   (quote
-    ("~/Dropbox/orgfiles/gcal.org" "~/Dropbox/orgfiles/i.org")))
  '(org-support-shift-select t)
  '(package-selected-packages
    (quote
-    (rjsx-mode blacken js2-refactor js-comint company-tern tern apib-mode wgrep-helm helm-swoop swoop helm-rg helm-spotify fiplr elpy protobuf-mode py-isort exec-path-from-shell github-browse-file company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element use-package)))
- '(projectile-enable-caching t)
- '(projectile-mode t nil (projectile))
- '(py-isort-options nil)
- '(restclient-inhibit-cookies t)
- '(tls-program
-   (quote
-    ("gnutls-cli --insecure -p %p %h" "gnutls-cli --x509cafile %t -p %p %h" "gnutls-cli --x509cafile %t -p %p %h --protocols ssl3" "openssl s_client -connect %h:%p -no_ssl2 -ign_eof")))
- '(use-package-always-ensure t))
+    (company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element htmlize helm-company elpy ox-rst ob-restclient diff-hl helm-gitignore gitignore-mode copy-as-format powerline dashboard all-the-icons engine-mode helm-ls-git helm-ag treemacs-icons-dired treemacs-magit treemacs-projectile treemacs helm-projectile projectile helm js-comint company-tern tern exec-path-from-shell yasnippet-snippets web-mode use-package smex smartparens rjsx-mode restclient py-isort move-text material-theme markdown-mode kubernetes k8s-mode indium hlinum flycheck dockerfile-mode docker))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-(put 'downcase-region 'disabled nil)

@@ -1,0 +1,1063 @@
+#+TITLE: Zeta emacs configuration file
+#+AUTHOR: Zeta Hernandez
+#+EMAIL: zetahernandez@gmail.com
+#+DESCRIPTION:
+#+KEYWORDS:
+#+LANGUAGE:  en
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+PROPERTY: header-args :tangle "~/.emacs.d/init.el"
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/setup/theme-readtheorg.setup
+
+* Emacs initialization
+** Package management
+The first part of the configuration is to prepare the package management. I am using =use-package= as
+the central tool to deal with configuration of the packages.
+
+** Emacs package configuration
+   In this section, we are configuring the repositories and emacs internal package management. The only
+   specificity here is that the TLS algorithm is specific for 26.2.1.
+
+#+begin_src emacs-lisp :tangle yes
+  (require 'package)
+  ;;
+  (when (and (= emacs-major-version 26)
+             (= emacs-minor-version 2)
+             (= emacs-build-number 1))
+    (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+
+  (setq package-enable-at-startup nil
+        package-check-signature nil
+        package-archives '(("GNU ELPA"     . "https://elpa.gnu.org/packages/")
+                           ("MELPA"        . "https://melpa.org/packages/")
+                           ("ORGMODE"      . "http://orgmode.org/elpa/"))
+        package-archive-priorities  '(("ORGMODE"      . 15)
+                                      ("MELPA"        . 10)
+                                      ("GNU ELPA"     . 5))
+        package-check-signature nil)
+
+  (package-initialize)
+#+end_src
+
+** Load use-package
+The use-package macro allows you to isolate package configuration in your .emacs file in a way that is both performance-oriented and, well, tidy.
+#+begin_src emacs-lisp :tangle yes
+  (when (not package-archive-contents)
+    (package-refresh-contents))
+
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
+
+#+end_src
+
+By default all packages should be installed from package manager as that’s the usual path.
+This is equivalent to setting :ensure t on each call to use-package.
+To disable set :ensure nil (this is done automatically for any packages using :load-path so shouldn’t generally be needed).
+
+#+begin_src emacs-lisp :tangle yes
+  (setq use-package-always-ensure t)
+#+end_src
+** Backup files
+This section is dedicated to deal with backups. The main logic is to exlude some specific files
+(either because of they are sensitive, either because they are just results of a process). For the
+other ones, I want to have an easy way to navigate in it.
+
+*** Global backup configuration
+
+#+begin_src emacs-lisp :tangle yes
+  (defconst private-dir  (expand-file-name "private" user-emacs-directory))
+  (defconst temp-dir (format "%s/cache" private-dir)
+    "Hostname-based elisp temp directories")
+
+  ;; If you don’t want to clutter up your file tree with Emacs’ backup files, you can save them to the system’s “temp” directory:
+  ;; Default Backup directory
+  (defvar backup-directory "~/.emacs.d/backups/")
+  (setq backup-directory-alist `((".*" . ,backup-directory)))
+
+  (when (not (file-exists-p backup-directory))
+    (make-directory backup-directory t))
+
+
+  ;; Auto-save
+  (defvar auto-save-directory "~/.emacs.d/auto-save/")
+  (setq auto-save-file-name-transforms
+    `((".*" ,temporary-file-directory t)))
+  (when (not (file-exists-p auto-save-directory))
+      (make-directory auto-save-directory t))
+#+end_src
+** Encoding
+
+#+begin_src emacs-lisp :tangle yes
+;; Core settings
+;; UTF-8 please
+(set-charset-priority 'unicode)
+(setq locale-coding-system   'utf-8)   ; pretty
+(set-terminal-coding-system  'utf-8)   ; pretty
+(set-keyboard-coding-system  'utf-8)   ; pretty
+(set-selection-coding-system 'utf-8)   ; please
+(prefer-coding-system        'utf-8)   ; with sugar on top
+(setq default-process-coding-system '(utf-8-unix . utf-8-unix))
+#+end_src
+
+** Mouse Scroll
+#+begin_src emacs-lisp :tangle yes
+;; Mouse scroll
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil))) ;; one line at a time
+(setq scroll-conservatively 10000)
+;; (setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
+(setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
+(setq scroll-step 1) ;; keyboard scroll one line at a time
+#+end_src
+
+** OSX config
+#+begin_src emacs-lisp :tangle yes
+;;Mac key mode
+(setq ns-right-alternate-modifier nil)
+#+end_src
+
+** Preferences
+Show full path of the buffer on the buffer's title
+#+begin_src emacs-lisp :tangle yes
+(setq frame-title-format
+      (list (format "%s %%S: %%j " (system-name))
+        '(buffer-file-name "%f" (dired-directory dired-directory "%b"))))
+#+end_src
+
+Ignore ring bell
+
+#+begin_src emacs-lisp :tangle yes
+(setq ring-bell-function 'ignore)
+#+end_src
+
+Make the =yes or no= prompts shorter.
+
+#+begin_src emacs-lisp :tangle yes
+(defalias 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+** Exec path
+#+begin_src emacs-lisp :tangle yes
+(use-package exec-path-from-shell
+  :ensure t
+  :init (exec-path-from-shell-initialize))
+#+end_src
+** Appearance
+*** Themes
+Material theme
+#+begin_src emacs-lisp :tangle yes
+(use-package material-theme
+  :defer t
+  :init
+  (load-theme 'material t))
+#+end_src
+*** Remove toolbar
+#+begin_src emacs-lisp :tangle yes
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+#+end_src
+* Emacs customization
+
+** Dashboard
+Load a dashboard buffer when emacs starts
+#+begin_src emacs-lisp :tangle yes
+(use-package all-the-icons)
+
+(use-package dashboard
+  :config
+  (setq dashboard-items '((recents  . 10)
+                        (bookmarks . 5)
+                        (projects . 5)
+                        (agenda . 5)))
+
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (dashboard-setup-startup-hook))
+
+#+end_src
+
+** Suggest next key
+Suggest next keys to me based on currently entered key combination.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package which-key
+  :config
+  (which-key-mode))
+#+end_src
+** Navigation
+
+*** Switch windows
+#+begin_src emacs-lisp :tangle yes
+(use-package windmove
+  :bind
+  ("C-c <up>" . windmove-up)
+  ("C-c <down>" . windmove-down)
+  ("C-c <left>" . windmove-left)
+  ("C-c <right>" . windmove-right))
+#+end_src
+
+** Powerline
+
+Enhance the powerline
+
+#+begin_src emacs-lisp :tangle yes
+(use-package powerline
+  :config
+  (powerline-default-theme))
+
+#+end_src
+
+** Recent files
+Opening recent files is always an easy and fast shortcut. Some files should be ignored though. That
+leads to this configuration
+
+#+begin_src emacs-lisp :tangle yes
+(use-package recentf
+  :config
+  (setq recentf-max-menu-items 100)
+  (setq recentf-save-file (recentf-expand-file-name "~/.emacs.d/private/cache/recentf"))
+  (recentf-mode 1))
+#+end_src
+** Copy as format
+
+Copy text with format to easily paste it in different applications
+#+begin_src emacs-lisp :tangle yes
+(use-package copy-as-format
+  :bind (:map mode-specific-map
+         :prefix-map copy-as-format-prefix-map
+         :prefix "w"
+         ("w" . copy-as-format)
+         ("g" . copy-as-format-github)
+         ("h" . copy-as-format-hipchat-pidgin)
+         ("j" . copy-as-format-jira)
+         ("m" . copy-as-format-markdown)
+         ("o" . copy-as-format-org-mode)
+         ("r" . copy-as-format-rst)
+         ("s" . copy-as-format-slack)
+         ("v" . org-copy-visible))
+  :config
+  ;; (setq copy-as-format-default "slack")
+  ;; Define own format since pidgin doesn't allow to begin a message with `/code'
+  (defun copy-as-format--hipchat-pidgin (text _multiline)
+    (format "/say /code %s" text))
+  (add-to-list 'copy-as-format-format-alist '("hipchat-pidgin" copy-as-format--hipchat-pidgin))
+  (defun copy-as-format-hipchat-pidgin ()
+    (interactive)
+    (setq copy-as-format-default "hipchat-pidgin")
+    (copy-as-format)))
+#+end_src
+* Completion
+This part focuses on completion configuration. Language specific configurations are not done here
+but in the dedicate language configuration part. This section is just for global configuration.
+
+** Helm
+
+#+begin_src emacs-lisp :tangle yes
+(use-package helm
+  :bind (("M-x" . helm-M-x)
+         ("C-x C-m" . helm-M-x)
+         ("C-x C-f" . helm-find-files)
+         ("C-x C-d" . helm-browse-project)
+         ("C-x v" . helm-projectile)
+         ("C-s"     . helm-occur)
+         ("C-r"     . helm-occur)
+         ("C-x c p" . helm-projectile-ag)
+         ("C-x c k" . helm-show-kill-ring)
+         ("C-x f" . helm-recentf)
+         ("C-SPC" . helm-dabbrev)
+         ("M-y" . helm-show-kill-ring)
+         ("C-x b" . helm-buffers-list)
+         :map helm-map
+         ("<tab>" . helm-execute-persistent-action))
+  :config
+  ;; open helm buffer inside current window, don't occupy the entire other window
+  (setq helm-split-window-in-side-p t)
+  (setq helm-recentf-fuzzy-match t
+      helm-locate-fuzzy-match nil ;; locate fuzzy is worthless
+      helm-M-x-fuzzy-match t
+      helm-buffers-fuzzy-matching t
+      helm-semantic-fuzzy-match t
+      helm-apropos-fuzzy-match t
+      helm-imenu-fuzzy-match t
+      helm-lisp-fuzzy-completion t
+      helm-completion-in-region-fuzzy-match t))
+#+end_src
+** Company
+In order to have inline completion, really important for coding, I use company. However I adapted
+some facing attributes. Each language is also adding its backend when needed. Therefore, only global
+configuration here.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package company
+  :config
+  ;; Global
+  (setq company-idle-delay 1
+    company-minimum-prefix-length 1
+    company-show-numbers t
+    company-tooltip-limit 20)
+  ;; Facing
+  (unless (face-attribute 'company-tooltip :background)
+      (set-face-attribute 'company-tooltip nil :background "black" :foreground "gray40")
+      (set-face-attribute 'company-tooltip-selection nil :inherit 'company-tooltip :background "gray15")
+      (set-face-attribute 'company-preview nil :background "black")
+      (set-face-attribute 'company-preview-common nil :inherit 'company-preview :foreground "gray40")
+      (set-face-attribute 'company-scrollbar-bg nil :inherit 'company-tooltip :background "gray20")
+      (set-face-attribute 'company-scrollbar-fg nil :background "gray40"))
+  ;; Activating globally
+  (global-company-mode t))
+
+;; Add yasnippet support for all company backends
+;; https://github.com/syl20bnr/spacemacs/pull/179
+(defvar company-mode/enable-yas t
+  "Enable yasnippet for all backends.")
+
+(defun company-mode/backend-with-yas (backend)
+  (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+      backend
+    (append (if (consp backend) backend (list backend))
+            '(:with company-yasnippet))))
+
+(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+
+#+end_src
+* Editing
+
+** Delete trailing whitespace before save
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+end_src
+
+** Replace selection
+
+#+begin_src emacs-lisp :tangle yes
+(delete-selection-mode 1)
+#+end_src
+
+** Duplicate current line or region C-c d
+
+#+begin_src emacs-lisp :tangle yes
+(defun duplicate-current-line-or-region (arg)
+  "Duplicates the current line or region ARG times.
+If there's no region, the current line will be duplicated. However, if
+there's a region, all lines that region covers will be duplicated."
+  (interactive "p")
+  (let (beg end (origin (point)))
+    (if (and mark-active (> (point) (mark)))
+        (exchange-point-and-mark))
+    (setq beg (line-beginning-position))
+    (if mark-active
+        (exchange-point-and-mark))
+    (setq end (line-end-position))
+    (let ((region (buffer-substring-no-properties beg end)))
+      (dotimes (i arg)
+        (goto-char end)
+        (newline)
+        (insert region)
+        (setq end (point)))
+      (goto-char (+ origin (* (length region) arg) arg)))))
+
+(global-set-key (kbd "C-c d") 'duplicate-current-line-or-region)
+
+#+end_src
+
+** Make Undo C-z - Redo C-Z
+
+#+begin_src emacs-lisp :tangle yes
+(use-package undo-tree
+  :config
+  ;; Remember undo history
+  (setq
+   undo-tree-auto-save-history t
+   undo-tree-history-directory-alist `(("." . ,(concat temp-dir "/undo/"))))
+  (global-undo-tree-mode 1))
+
+(global-set-key (kbd "C-z") 'undo)
+;; make ctrl-Z redo
+(defalias 'redo 'undo-tree-redo)
+(global-set-key (kbd "C-S-z") 'redo)
+(global-set-key (kbd "M-TAB") 'helm-recentf)
+(global-set-key (kbd "M-TAB") 'helm-recentf)
+#+end_src
+
+** Show line number
+#+begin_src emacs-lisp :tangle yes
+(use-package linum
+  :config
+  (setq linum-format " %3d ")
+  (global-linum-mode nil))
+
+;; highlight current line number
+(use-package hlinum
+  :config
+  (hlinum-activate))
+
+#+end_src
+
+** Multiple cursors
+#+begin_src emacs-lisp :tangle yes
+(use-package multiple-cursors
+  :bind
+  ("C-S-c C-S-c" . mc/edit-lines)
+  ("C->" . mc/mark-next-like-this)
+  ("C-<" . mc/mark-previous-like-this)
+  ("C-c C->" . mc/mark-all-like-this))
+#+end_src
+
+** Smartparens
+Minor mode for Emacs that deals with parens pairs and tries to be smart about it.
+#+begin_src emacs-lisp :tangle yes
+(use-package smartparens)
+
+(use-package smex)
+#+end_src
+** Move text up/down
+#+begin_src emacs-lisp :tangle yes
+(use-package move-text
+  :bind (([(meta shift up)]      . move-text-up)
+         ([(meta shift down)]    . move-text-down)))
+#+end_src
+* Coding
+** Snippets
+#+begin_src emacs-lisp :tangle yes
+  (use-package yasnippet
+      :config
+      ;; Adding yasnippet support to company
+      (eval-after-load 'company
+	'(lambda ()
+	(add-to-list 'company-backends 'company-yasnippet)))
+
+      (yas-global-mode 1))
+
+  (use-package yasnippet-snippets)
+#+end_src
+** Rest client
+#+begin_src emacs-lisp :tangle yes
+(use-package restclient)
+
+(use-package restclient-helm
+  :disabled t
+  :after (restclient helm))
+#+end_src
+** Docker modes
+A Docker client for emacs
+#+begin_src emacs-lisp :tangle yes
+(use-package docker)
+;; Dockerfile file major mode
+(use-package dockerfile-mode
+  :mode ("Dockerfile\\'" . dockerfile-mode))
+#+end_src
+** Kubernetes
+A Kubernetes client for emacs
+#+begin_src emacs-lisp :tangle yes
+(use-package kubernetes
+  :ensure t
+  :commands (kubernetes-overview))
+;; kubernetes file major mode
+(use-package k8s-mode
+  :ensure t
+  :hook (k8s-mode . yas-minor-mode))
+
+#+end_src
+** Markdown
+#+begin_src emacs-lisp :tangle yes
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
+#+end_src
+** YAML
+#+begin_src emacs-lisp :tangle yes
+(use-package yaml-mode
+  :mode ("\\.ya?ml\\'" . yaml-mode))
+
+#+end_src
+** Flycheck
+Use flychek on for sintax checking on Javascriprt
+#+begin_src emacs-lisp :tangle yes
+(use-package flycheck)
+#+end_src
+** Web
+#+begin_src emacs-lisp :tangle yes
+(use-package web-mode
+  :bind (("C-c ]" . emmet-next-edit-point)
+         ("C-c [" . emmet-prev-edit-point)
+         ("C-c o b" . browse-url-of-file))
+  :mode
+  (("\\.html?\\'" . web-mode)
+   ("\\.phtml?\\'" . web-mode)
+   ("\\.tpl\\.php\\'" . web-mode)
+   ("\\.[agj]sp\\'" . web-mode)
+   ("\\.as[cp]x\\'" . web-mode)
+   ("\\.erb\\'" . web-mode)
+   ("\\.mustache\\'" . web-mode)
+   ("\\.djhtml\\'" . web-mode)
+   ("\\.handlebars\\'" . web-mode))
+  :config
+  (setq web-mode-markup-indent-offset 4
+        web-mode-css-indent-offset 4
+        web-mode-code-indent-offset 4)
+
+  (progn (setq web-mode-engines-alist
+        '(("handlebars"    . "\\.handlebars\\'")
+          ("mako"          . "\\.html?\\'"))
+        ))
+
+  (add-hook 'web-mode-hook 'jsx-flycheck)
+
+  ;; highlight enclosing tags of the element under cursor
+  (setq web-mode-enable-current-element-highlight t)
+
+  (defadvice web-mode-highlight-part (around tweak-jsx activate)
+    (if (equal web-mode-content-type "jsx")
+        (let ((web-mode-enable-part-face nil))
+          ad-do-it)
+      ad-do-it))
+
+  (defun jsx-flycheck ()
+    (when (equal web-mode-content-type "jsx")
+      ;; enable flycheck
+      (flycheck-select-checker 'jsxhint-checker)
+      (flycheck-mode)))
+
+  ;; editing enhancements for web-mode
+  ;; https://github.com/jtkDvlp/web-mode-edit-element
+  (use-package web-mode-edit-element
+    :config (add-hook 'web-mode-hook 'web-mode-edit-element-minor-mode))
+
+  ;; snippets for HTML
+  ;; https://github.com/smihica/emmet-mode
+  (use-package emmet-mode
+    :init (setq emmet-move-cursor-between-quotes t) ;; default nil
+    :diminish (emmet-mode . " e"))
+  (defun my-web-mode-hook ()
+    "Hook for `web-mode' config for company-backends."
+    (set (make-local-variable 'company-backends)
+         '((company-tern company-css company-web-html company-files))))
+  (add-hook 'web-mode-hook 'my-web-mode-hook)
+
+  ;; Enable JavaScript completion between <script>...</script> etc.
+  (defadvice company-tern (before web-mode-set-up-ac-sources activate)
+    "Set `tern-mode' based on current language before running company-tern."
+    (message "advice")
+    (if (equal major-mode 'web-mode)
+	(let ((web-mode-cur-language
+	       (web-mode-language-at-pos)))
+	  (if (or (string= web-mode-cur-language "javascript")
+		  (string= web-mode-cur-language "jsx"))
+	      (unless tern-mode (tern-mode))
+	    (if tern-mode (tern-mode -1))))))
+  (add-hook 'web-mode-hook 'company-mode)
+
+  ;; to get completion data for angularJS
+  (use-package ac-html-angular :defer t)
+  ;; to get completion for twitter bootstrap
+  (use-package ac-html-bootstrap :defer t)
+
+  ;; to get completion for HTML stuff
+  ;; https://github.com/osv/company-web
+  (use-package company-web)
+
+  (add-hook 'web-mode-hook 'company-mode))
+
+;; configure CSS mode company backends
+(use-package css-mode
+  :config
+  (defun my-css-mode-hook ()
+    (set (make-local-variable 'company-backends)
+         '((company-css company-dabbrev-code company-files))))
+  (add-hook 'css-mode-hook 'my-css-mode-hook)
+  (add-hook 'css-mode-hook 'company-mode))
+
+#+end_src
+** Python
+I use elpy plugin for python
+#+begin_src emacs-lisp :tangle yes
+(use-package python
+  :mode ("\\.py" . python-mode)
+  :config
+  (use-package elpy
+    :init
+    (add-to-list 'auto-mode-alist '("\\.py$" . python-mode))
+    :config
+    (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
+    (setq elpy-rpc-backend "jedi")
+    (setq elpy-rpc-python-command "python3")
+    (setq python-shell-interpreter "python3")
+
+    (setq python-shell-interpreter "ipython3"
+      python-shell-interpreter-args "-i")
+    ;; (add-hook 'python-mode-hook #'lsp)
+    ;; use flymake on emacs 26.1
+    ;; use flycheck not flymake with elpy
+    ;; (when (require 'flycheck nil t)
+    ;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+    ;;   (add-hook 'elpy-mode-hook 'flycheck-mode))
+    ;; (setq python-shell-interpreter "jupyter"
+    ;;       python-shell-interpreter-args "console --simple-prompt"
+    ;;       python-shell-prompt-detect-failure-warning nil)
+    ;; (add-to-list 'python-shell-completion-native-disabled-interpreters
+    ;;          "jupyter")
+    ;; (add-hook 'python-mode-hook 'py-autopep8-enable-on-save)
+    ;;flycheck-python-flake8-executable "/usr/local/bin/flake8"
+    :bind (:map elpy-mode-map
+	      ("M-." . elpy-goto-definition)
+	      ("M-," . pop-tag-mark)))
+  (elpy-enable))
+
+#+end_src
+
+add support for mypy on flymake
+#+begin_src emacs-lisp :tangle yes
+(require 'flymake)
+
+
+(defun flymake-mypy-init ()
+  "Init mypy."
+  (let* ((temp-file (flymake-init-create-temp-buffer-copy
+                     'flymake-create-temp-inplace))
+         (local-file (file-relative-name
+                      temp-file
+                      (file-name-directory buffer-file-name))))
+    (list "mypy" (list local-file "-s"))))
+
+
+(when (load "flymake" t)
+  (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-mypy-init)))
+#+end_src
+
+Sort imports plugins
+#+begin_src emacs-lisp :tangle yes
+(use-package py-isort)
+#+end_src
+** Javascript
+Use rjsx-mode over js2-mode
+#+begin_src emacs-lisp :tangle yes
+  (use-package indium)
+  (use-package rjsx-mode)
+
+  (use-package js2-mode
+    :bind (:map js2-mode-map
+		(("C-x C-e" . js-send-last-sexp)
+		 ("C-M-x" . js-send-last-sexp-and-go)
+		 ("C-c C-b" . js-send-buffer-and-go)
+		 ("C-c C-l" . js-load-file-and-go)))
+    :mode
+    ("\\.js$" . rjsx-mode)
+    :config
+    (custom-set-variables '(js2-strict-inconsistent-return-warning nil))
+    (custom-set-variables '(js2-strict-missing-semi-warning nil))
+
+    (require 'indium)
+    (add-hook 'js-mode-hook #'indium-interaction-mode)
+
+    (require 'flycheck)
+    ;; (require 'find-local-executable)
+
+    (setq js-indent-level 4)
+    (setq js2-indent-level 4)
+    (setq js2-basic-offset 4)
+    (setq sgml-basic-offset 4)
+
+    (setq-default flycheck-disabled-checkers
+		  (append flycheck-disabled-checkers
+			  '(javascript-jshint)))
+
+    (setq-default flycheck-disabled-checkers
+		  (append flycheck-disabled-checkers
+			  '(json-jsonlist)))
+
+    (add-hook 'js2-mode-hook 'flycheck-mode)
+
+    ;; use eslint with web-mode for jsx files
+    (flycheck-add-mode 'javascript-eslint 'js2-mode)
+
+    ;; customize flycheck temp file prefix
+    (setq-default flycheck-temp-prefix ".flycheck")
+
+    ;; disable json-jsonlist checking for json files
+    (when (memq window-system '(mac ns))
+      (exec-path-from-shell-initialize))
+
+    ;; (find-local-executable-nodejs-setup-eslint)
+
+    ;; tern :- IDE like features for javascript and completion
+    ;; http://ternjs.net/doc/manual.html#emacs
+    (use-package tern
+      :config
+      (defun my-js-mode-hook ()
+	"Hook for `js-mode'."
+	(set (make-local-variable 'company-backends)
+	     '((company-tern company-files))))
+      (add-hook 'js2-mode-hook 'my-js-mode-hook)
+      (add-hook 'js2-mode-hook 'company-mode))
+
+    (add-hook 'js2-mode-hook 'tern-mode)
+    (add-hook 'js2-mode-hook 'whitespace-mode)
+    (setq whitespace-line-column 121)
+    ;; company backend for tern
+    ;; http://ternjs.net/doc/manual.html#emacs
+    (use-package company-tern)
+    ;; Run a JavaScript interpreter in an inferior process window
+    ;; https://github.com/redguardtoo/js-comint
+    (use-package js-comint
+    :config
+    (setq inferior-js-program-command "node"))
+
+    ;; js2-refactor :- refactoring options for emacs
+    ;; https://github.com/magnars/js2-refactor.el
+    (use-package js2-refactor
+    :diminish js2-refactor-mode
+    :config
+    (js2r-add-keybindings-with-prefix "C-c j r"))
+    (add-hook 'js2-mode-hook 'js2-refactor-mode))
+
+#+end_src
+** CSV
+#+begin_src emacs-lisp :tangle yes
+(use-package csv-mode
+  :config (setq-default csv-align-padding 2))
+#+end_src
+** Golang
+#+begin_src emacs-lisp :tangle yes
+(use-package go-mode
+  :config
+  ; Use goimports instead of go-fmt
+  (setq gofmt-command "goimports")
+  (add-hook 'go-mode-hook 'company-mode)
+  ;; Call Gofmt before saving
+  (add-hook 'before-save-hook 'gofmt-before-save)
+  (add-hook 'go-mode-hook 'setup-go-mode-compile)
+  (add-hook 'go-mode-hook #'smartparens-mode)
+  (add-hook 'go-mode-hook '(lambda ()
+			     (local-set-key (kbd "C-c C-r") 'go-remove-unused-imports)))
+  (add-hook 'go-mode-hook '(lambda ()
+			     (local-set-key (kbd "C-c C-g") 'go-goto-imports)))
+  (add-hook 'go-mode-hook (lambda ()
+			    (set (make-local-variable 'company-backends) '(company-go))
+			    (company-mode))))
+
+(use-package company-go
+  :after go-mode
+  :config
+  (setq tab-width 4)
+
+  :bind (:map go-mode-map
+  ; Godef jump key binding
+  ("M-." . godef-jump)))
+
+(use-package flymake-go)
+
+(use-package go-eldoc
+  :config
+  (add-hook 'go-mode-hook 'go-eldoc-setup))
+
+(defun setup-go-mode-compile ()
+  ; Customize compile command to run go build
+  (if (not (string-match "go" compile-command))
+      (set (make-local-variable 'compile-command)
+           "go build -v && go test -v && go vet")))
+
+(provide 'lang-go)
+#+end_src
+** PHP
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ac-php)
+
+(use-package php-mode
+  :mode
+  (("\\.php\\'" . php-mode))
+  :config
+  (add-hook 'php-mode-hook
+	    '(lambda ()
+	       (require 'company-php)
+	       (company-mode t)
+	       (add-to-list 'company-backends 'company-ac-php-backend))))
+
+(use-package phpunit
+  :mode
+  (("\\.php\\'" . phpunit-mode)))
+
+(provide 'lang-php)
+#+end_src
+* Version control
+** Git
+*** Magit
+
+#+begin_src emacs-lisp :tangle yes
+(use-package magit
+  :config
+
+  ;; (setq magit-completing-read-function 'ivy-completing-read)
+
+  :bind
+  ;; Magic
+  ("C-x g s" . magit-status)
+  ("C-x g x" . magit-checkout)
+  ("C-x g c" . magit-commit)
+  ("C-x g p" . magit-push)
+  ("C-x g u" . magit-pull)
+  ("C-x g e" . magit-ediff-resolve)
+  ("C-x g r" . magit-rebase-interactive)
+  ("C-x g l" . magit-log))
+
+(use-package magit-popup)
+#+end_src
+
+*** Git ignore
+#+begin_src emacs-lisp :tangle yes
+(use-package gitignore-mode)
+
+(use-package helm-gitignore)
+#+end_src
+
+*** Highlight changes
+Highlights uncommitted changes on the left side of the window, allows you to jump between and revert them selectively.
+#+begin_src emacs-lisp :tangle yes
+(use-package diff-hl
+  :config
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+  (global-diff-hl-mode))
+#+end_src
+* Project Managment
+
+** Projectile
+#+begin_src emacs-lisp :tangle yes
+(use-package projectile
+  :config
+  (setq projectile-known-projects-file
+        (expand-file-name "projectile-bookmarks.eld" temp-dir))
+
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (setq projectile-completion-system 'helm)
+  (setq projectile-switch-project-action (lambda (&optional arg) (helm-browse-project arg)))
+
+  (projectile-global-mode))
+
+#+end_src
+
+Helm Projectile
+#+begin_src emacs-lisp :tangle yes
+
+(use-package helm-projectile
+  :config
+  (helm-projectile-on)
+  (setq helm-projectile-fuzzy-match nil))
+
+#+end_src
+
+** Treemacs
+A file tree for projects
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs
+  :ensure t
+  :defer t
+  :init
+  (with-eval-after-load 'winum
+    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config
+  (progn
+    (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
+          treemacs-deferred-git-apply-delay      0.5
+          treemacs-display-in-side-window        t
+          treemacs-eldoc-display                 t
+          treemacs-file-event-delay              5000
+          treemacs-file-follow-delay             0.2
+          treemacs-follow-after-init             t
+          treemacs-git-command-pipe              ""
+          treemacs-goto-tag-strategy             'refetch-index
+          treemacs-indentation                   2
+          treemacs-indentation-string            " "
+          treemacs-is-never-other-window         nil
+          treemacs-max-git-entries               5000
+          treemacs-missing-project-action        'ask
+          treemacs-no-png-images                 nil
+          treemacs-no-delete-other-windows       t
+          treemacs-project-follow-cleanup        nil
+          treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+          treemacs-position                      'left
+          treemacs-recenter-distance             0.1
+          treemacs-recenter-after-file-follow    nil
+          treemacs-recenter-after-tag-follow     nil
+          treemacs-recenter-after-project-jump   'always
+          treemacs-recenter-after-project-expand 'on-distance
+          treemacs-show-cursor                   nil
+          treemacs-show-hidden-files             t
+          treemacs-silent-filewatch              nil
+          treemacs-silent-refresh                nil
+          treemacs-sorting                       'alphabetic-desc
+          treemacs-space-between-root-nodes      t
+          treemacs-tag-follow-cleanup            t
+          treemacs-tag-follow-delay              1.5
+          treemacs-width                         35)
+
+    ;; The default width and height of the icons is 22 pixels. If you are
+    ;; using a Hi-DPI display, uncomment this to double the icon size.
+    ;;(treemacs-resize-icons 44)
+
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-fringe-indicator-mode t)
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null treemacs-python-executable)))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple))))
+  :bind
+  (:map global-map
+        ("M-0"       . treemacs-select-window)
+        ("C-x t 1"   . treemacs-delete-other-windows)
+        ("C-x t t"   . treemacs)
+        ("C-x t B"   . treemacs-bookmark)
+        ("C-x t C-t" . treemacs-find-file)
+        ("C-x t M-t" . treemacs-find-tag)))
+
+#+end_src
+
+Integrate it with projectile
+#+begin_src emacs-lisp :tangle yes
+
+(use-package treemacs-projectile
+  :after treemacs projectile)
+#+end_src
+
+Integrate it with magit
+
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-magit
+  :after treemacs magit)
+#+end_src
+
+Allows you to use treemacs icons in dired buffers with treemacs-icons-dired-mode
+
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs-icons-dired
+  :after treemacs dired
+  :config (treemacs-icons-dired-mode))
+#+end_src
+* Searching Text
+** Ripgrep
+Use ripgrep to search text in folders/projects, I'm replacing the ag command in the helm-ag package
+since it has better support than helm-rg
+#+begin_src emacs-lisp :tangle yes
+(use-package helm-ag
+  :config
+  (setq helm-ag-base-command "rg --no-heading")
+  (bind-key* "C-c p s r" 'helm-do-ag-project-root))
+#+end_src
+** ls-git
+This package provides an excelent browser to search files in a project =M-x helm-browse-project= or =C-x C-d=
+#+begin_src emacs-lisp :tangle yes
+(use-package helm-ls-git)
+#+end_src
+** wgrep
+I use wgrep mode to edit multiple files at once when searching
+
+#+begin_src emacs-lisp :tangle yes
+(use-package wgrep)
+#+end_src(use-package wgrep)
+
+** Engine Mode
+Engine mode provide shortcuts to search in diferents search engines like google, github etc
+
+#+begin_src emacs-lisp :tangle yes
+(use-package engine-mode
+  :init
+  (engine-mode t)
+  (engine/set-keymap-prefix (kbd "C-c s"))
+  :config
+  (defengine github-eventbrite
+	"https://github.com/search?l=Python&q=org:eventbrite+%s&type=Code"
+	:keybinding "e")
+
+  (defengine docs-eventbrite
+	"https://docsearch.evbhome.com/?q=%s"
+	:keybinding "d")
+
+  (defengine github
+	"https://github.com/search?ref=simplesearch&q=%s"
+	:keybinding "h")
+
+  (defengine stackoverflow
+	"https://stackoverflow.com/search?q=%s"
+	:keybinding "s")
+
+  (defengine google
+	"https://www.google.com/search?q=%s"
+	:keybinding "g"))
+#+end_src
+* Org mode
+#+begin_src emacs-lisp :tangle yes
+(use-package ob-restclient)
+
+(use-package ox-rst)
+
+(use-package htmlize)
+
+(global-set-key (kbd "C-c c")
+                'org-capture)
+
+(setq org-agenda-files (list "~/Dropbox/orgfiles/gcal.org"
+			     "~/Dropbox/orgfiles/i.org"
+			     "~/Dropbox/orgfiles/schedule.org"))
+
+
+(setq org-capture-templates
+      '(("a" "Appointment" entry (file  "~/Dropbox/orgfiles/gcal.org" "Appointments")
+	 "* TODO %?\n:PROPERTIES:\n\n:END:\nDEADLINE: %^T \n %i\n")
+	("n" "Note" entry (file+headline "~/Dropbox/orgfiles/notes.org" "Notes")
+	 "* Note %?\n%T")
+	("l" "Link" entry (file+headline "~/Dropbox/orgfiles/links.org" "Links")
+	 "* %? %^L %^g \n%T" :prepend t)
+	("b" "Blog idea" entry (file+headline "~/Dropbox/orgfiles/i.org" "Blog Topics:")
+	 "* %?\n%T" :prepend t)
+	("t" "To Do Item" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do Items")
+	 "* %?\n%T" :prepend t)
+	("j" "Journal" entry (file+datetree "~/Dropbox/journal.org")
+	 "* %?\nEntered on %U\n  %i\n  %a")
+	("s" "Screencast" entry (file "~/Dropbox/orgfiles/screencastnotes.org")
+	 "* %?\n%i\n")))
+
+(setq org-ditaa-jar-path "~/git/org-mode/contrib/scripts/ditaa.jar")
+(setq org-plantuml-jar-path "~/Dropbox/plantuml.jar")
+(setq org-log-done 'time)
+
+(add-hook 'org-babel-after-execute-hook 'bh/display-inline-images 'append)
+
+; Make babel results blocks lowercase
+(setq org-babel-results-keyword "results")
+
+(defun bh/display-inline-images ()
+  (condition-case nil
+      (org-display-inline-images)
+    (error nil)))
+
+(org-babel-do-load-languages
+ (quote org-babel-load-languages)
+ (quote ((emacs-lisp . t)
+         (dot . t)
+         (sql . t)
+         (shell . t)
+         (python . t)
+         (org . t)
+         (plantuml . t)
+         (restclient . t)
+         (latex . t))))
+
+; Do not prompt to confirm evaluation
+; This may be dangerous - make sure you understand the consequences
+; of setting this -- see the docstring for details
+(setq org-confirm-babel-evaluate nil)
+
+;; Use fundamental mode when editing plantuml blocks with C-c '
+(add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
+;; ;; add additional languages with '((language . t)))
+
+(global-set-key (kbd "C-c a") 'org-agenda)
+
+#+end_src
