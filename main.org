@@ -1,4 +1,4 @@
-#+TITLE: Zeta emacs configuration file
+#+TITLE: Zeta Emacs configuration file
 #+AUTHOR: Zeta Hernandez
 #+EMAIL: zetahernandez@gmail.com
 #+DESCRIPTION:
@@ -10,13 +10,14 @@
 #+PROPERTY: header-args :tangle "~/.emacs.d/init.el"
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/setup/theme-readtheorg.setup
 
+This is my literate Emacs configuration file
 * Emacs initialization
 ** Package management
 The first part of the configuration is to prepare the package management. I am using =use-package= as
 the central tool to deal with configuration of the packages.
 
 ** Emacs package configuration
-   In this section, we are configuring the repositories and emacs internal package management. The only
+   In this section, we are configuring the repositories and Emacs internal package management. The only
    specificity here is that the TLS algorithm is specific for 26.2.1.
 
 #+begin_src emacs-lisp :tangle yes
@@ -59,7 +60,7 @@ To disable set :ensure nil (this is done automatically for any packages using :l
   (setq use-package-always-ensure t)
 #+end_src
 ** Backup files
-This section is dedicated to deal with backups. The main logic is to exlude some specific files
+This section is dedicated to deal with backups. The main logic is to exclude some specific files
 (either because of they are sensitive, either because they are just results of a process). For the
 other ones, I want to have an easy way to navigate in it.
 
@@ -160,7 +161,7 @@ Material theme
 * Emacs customization
 
 ** Dashboard
-Load a dashboard buffer when emacs starts
+Load a dashboard buffer when Emacs starts
 #+begin_src emacs-lisp :tangle yes
 (use-package all-the-icons)
 
@@ -763,26 +764,120 @@ Use rjsx-mode over js2-mode
 
 (provide 'lang-go)
 #+end_src
-** PHP
-
+** C/C++
 #+begin_src emacs-lisp :tangle yes
-(use-package ac-php)
-
-(use-package php-mode
-  :mode
-  (("\\.php\\'" . php-mode))
+;; C-IDE based on https://github.com/tuhdo/emacs-c-ide-demo
+(use-package cc-mode
   :config
-  (add-hook 'php-mode-hook
-	    '(lambda ()
-	       (require 'company-php)
-	       (company-mode t)
-	       (add-to-list 'company-backends 'company-ac-php-backend))))
+  ;; Available C style:
+  ;; "gnu": The default style for GNU projects
+  ;; "k&r": What Kernighan and Ritchie, the authors of C used in their book
+  ;; "bsd": What BSD developers use, aka "Allman style" after Eric Allman.
+  ;; "whitesmith": Popularized by the examples that came with Whitesmiths C, an early commercial C compiler.
+  ;; "stroustrup": What Stroustrup, the author of C++ used in his book
+  ;; "ellemtel": Popular C++ coding standards as defined by "Programming in C++, Rules and Recommendations," Erik Nyquist and Mats Henricson, Ellemtel
+  ;; "linux": What the Linux developers use for kernel development
+  ;; "python": What Python developers use for extension modules
+  ;; "java": The default style for java-mode (see below)
+  ;; "user": When you want to define your own style
+  (setq c-default-style "gnu") ;; set style to "linux"
+  (setq gdb-many-windows t ;; use gdb-many-windows by default
+	gdb-show-main t
+	c-basic-offset 4
+	tab-width 4
+	indent-tabs-mode t))
 
-(use-package phpunit
-  :mode
-  (("\\.php\\'" . phpunit-mode)))
+(use-package cmake-ide
+  :config
+  (add-hook 'c++-mode-hook '(lambda()
+                              (cmake-ide-setup))))
 
-(provide 'lang-php)
+;; (use-package semantic
+;;   :config
+;;   (semanticdb-enable-gnu-global-databases 'c-mode t)
+;;   (semanticdb-enable-gnu-global-databases 'c++-mode t)
+
+;;   (defun my-inhibit-semantic-p ()
+;;     (not (equal major-mode 'python-mode)))
+
+;;   (add-to-list 'semantic-inhibit-functions #'my-inhibit-semantic-p)
+
+;;   (setq semanticdb-default-save-directory (expand-file-name "semanticdb/" temp-dir))
+
+;;   (let ((semantic-submodes '(global-semantic-decoration-mode
+;; 			     global-semantic-idle-local-symbol-highlight-mode
+;; 			     global-semantic-highlight-func-mode
+;; 			     global-semanticdb-minor-mode
+;; 			     global-semantic-mru-bookmark-mode
+;; 			     global-semantic-idle-summary-mode
+;; 			     global-semantic-stickyfunc-mode
+;; 			     )))
+;;     (setq semantic-default-submodes (append semantic-default-submodes semantic-submodes)
+;; 	  semantic-idle-scheduler-idle-time 1))
+
+;;   (add-hook 'c-mode-common-hook (lambda () (semantic-mode 1))))
+
+(use-package irony
+  :config
+  ;; replace the `completion-at-point' and `complete-symbol' bindings in
+  ;; irony-mode's buffers by irony-mode's function
+  (add-hook 'c++-mode-hook 'irony-mode)
+  (add-hook 'c-mode-hook 'irony-mode)
+  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options))
+
+(use-package irony-eldoc
+  :config
+  (add-hook 'irony-mode-hook 'irony-eldoc))
+
+(use-package company-irony
+  :config
+  (add-to-list 'company-backends 'company-keywords)
+  (add-to-list 'company-backends 'company-irony))
+
+(use-package company-irony-c-headers
+  :config
+  (add-to-list 'company-backends 'company-irony-c-headers))
+
+
+(use-package flycheck-irony
+  :after flycheck-mode
+  :config
+  (add-hook 'flycheck-mode-hook #'flycheck-irony-setup))
+
+;; company-c-headers
+(use-package company-c-headers
+  :config
+  (add-to-list 'company-backends 'company-c-headers))
+
+(defun me/rtags ()
+  "Rtags configuration. Used only for nevigation."
+  (interactive)
+  (rtags-start-process-unless-running)
+  (setq rtags-display-result-backend 'ivy)
+  (add-hook 'kill-emacs-hook 'rtags-quit-rdm))
+
+(use-package rtags
+  :commands rtags-start-process-unless-running
+  :bind (("M-."     .  rtags-find-symbol-at-point)
+         ("M-?"     .  rtags-find-references-at-point)
+         ("M-,"     .  rtags-location-stack-back)
+         ("C-,"   .    rtags-location-stack-forward)
+         ("C-c r r" .  rtags-rename-symbolrtags-next-match))
+  :config
+  (setq rtags-completions-enabled t)
+  (add-hook 'c++-mode 'me/rtags)
+  (add-hook 'c-mode 'me/rtags)
+  (message "Rtags loaded"))
+
+(use-package company-rtags
+  :after rtags
+  :config
+  (add-to-list 'company-backends 'company-rtags))
+
+#+end_src
+** LUA
+#+begin_src emacs-lisp :tangle yes
+(use-package lua-mode)
 #+end_src
 * Version control
 ** Git
@@ -823,7 +918,7 @@ Highlights uncommitted changes on the left side of the window, allows you to jum
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   (global-diff-hl-mode))
 #+end_src
-* Project Managment
+* Project Management
 
 ** Projectile
 #+begin_src emacs-lisp :tangle yes
@@ -940,7 +1035,7 @@ Allows you to use treemacs icons in dired buffers with treemacs-icons-dired-mode
   :after treemacs dired
   :config (treemacs-icons-dired-mode))
 #+end_src
-* Searching Text
+* Searching
 ** Ripgrep
 Use ripgrep to search text in folders/projects, I'm replacing the ag command in the helm-ag package
 since it has better support than helm-rg
@@ -960,7 +1055,7 @@ I use wgrep mode to edit multiple files at once when searching
 
 #+begin_src emacs-lisp :tangle yes
 (use-package wgrep)
-#+end_src(use-package wgrep)
+#+end_src
 
 ** Engine Mode
 Engine mode provide shortcuts to search in diferents search engines like google, github etc
@@ -1059,5 +1154,65 @@ Engine mode provide shortcuts to search in diferents search engines like google,
 ;; ;; add additional languages with '((language . t)))
 
 (global-set-key (kbd "C-c a") 'org-agenda)
+
+#+end_src
+* Language checking
+
+#+begin_src emacs-lisp :tangle yes
+(use-package flyspell
+  :config
+
+  ;; Set programms
+  (setq-default ispell-program-name "aspell")
+  (setq-default ispell-list-command "--list")
+
+  ;; Some skipping
+  (add-to-list 'ispell-skip-region-alist '("^#+begin_src" . "^#+end_src"))
+  ;; Refresh flyspell after directory change
+  (defun flyspell-buffer-after-pdict-save (&rest _)
+    (flyspell-buffer))
+    (advice-add 'ispell-pdict-save :after #'flyspell-buffer-after-pdict-save)
+
+    ;; Popup
+    (defun flyspell-emacs-popup-textual (event poss word)
+      "A textual flyspell popup menu."
+      (require 'popup)
+      (let* ((corrects (if flyspell-sort-corrections
+                           (sort (car (cdr (cdr poss))) 'string<)
+                         (car (cdr (cdr poss)))))
+             (cor-menu (if (consp corrects)
+                           (mapcar (lambda (correct)
+                                     (list correct correct))
+                                   corrects)
+                         '()))
+             (affix (car (cdr (cdr (cdr poss)))))
+             show-affix-info
+             (base-menu  (let ((save (if (and (consp affix) show-affix-info)
+                                         (list
+                                          (list (concat "Save affix: " (car affix))
+                                                'save)
+                                          '("Accept (session)" session)
+                                          '("Accept (buffer)" buffer))
+                                       '(("Save word" save)
+                                         ("Accept (session)" session)
+                                         ("Accept (buffer)" buffer)))))
+                           (if (consp cor-menu)
+                               (append cor-menu (cons "" save))
+                             save)))
+             (menu (mapcar
+                    (lambda (arg) (if (consp arg) (car arg) arg))
+                    base-menu)))
+        (cadr (assoc (popup-menu* menu :scroll-bar t) base-menu))))
+
+
+    (defun flyspell-emacs-popup-choose (org-fun event poss word)
+      (if (window-system)
+          (funcall org-fun event poss word)
+        (flyspell-emacs-popup-textual event poss word)))
+
+    (eval-after-load "flyspell"
+      '(progn
+         (advice-add 'flyspell-emacs-popup :around #'flyspell-emacs-popup-choose)))
+    )
 
 #+end_src
