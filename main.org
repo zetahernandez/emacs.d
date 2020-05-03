@@ -171,11 +171,7 @@ Load a dashboard buffer when Emacs starts
                         (bookmarks . 5)
                         (projects . 5)
                         (agenda . 5)))
-
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-set-file-icons t)
   (dashboard-setup-startup-hook))
-
 #+end_src
 
 ** Suggest next key
@@ -591,6 +587,13 @@ I use elpy plugin for python
 
     (setq python-shell-interpreter "ipython3"
       python-shell-interpreter-args "-i")
+
+    (add-hook 'python-mode-hook
+          (lambda ()
+            (set (make-local-variable 'company-backends)
+                 '((company-anaconda company-dabbrev-code company-yasnippet)))))
+
+
     ;; (add-hook 'python-mode-hook #'lsp)
     ;; use flymake on emacs 26.1
     ;; use flycheck not flymake with elpy
@@ -658,10 +661,10 @@ Use rjsx-mode over js2-mode
     (require 'flycheck)
     ;; (require 'find-local-executable)
 
-    (setq js-indent-level 4)
-    (setq js2-indent-level 4)
-    (setq js2-basic-offset 4)
-    (setq sgml-basic-offset 4)
+    (setq js-indent-level 2)
+    (setq js2-indent-level 2)
+    (setq js2-basic-offset 2)
+    (setq sgml-basic-offset 2)
 
     (setq-default flycheck-disabled-checkers
 		  (append flycheck-disabled-checkers
@@ -717,6 +720,46 @@ Use rjsx-mode over js2-mode
     (add-hook 'js2-mode-hook 'js2-refactor-mode))
 
 #+end_src
+
+
+** Typescript
+#+begin_src emacs-lisp :tangle yes
+(defun setup-tide-mode ()
+  (interactive)
+  (tide-setup)
+  (flycheck-mode +1)
+  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+  (eldoc-mode +1)
+  (tide-hl-identifier-mode +1)
+  ;; company is an optional dependency. You have to
+  ;; install it separately via package-install
+  ;; `M-x package-install [ret] company`
+  (company-mode +1))
+
+;; aligns annotation to the right hand side
+(setq company-tooltip-align-annotations t)
+
+;; formats the buffer before saving
+(add-hook 'before-save-hook 'tide-format-before-save)
+
+(add-hook 'typescript-mode-hook #'setup-tide-mode)
+
+(use-package tide
+  :ensure t
+  :after (typescript-mode company flycheck)
+  :hook ((typescript-mode . tide-setup)
+         (typescript-mode . tide-hl-identifier-mode)
+         (before-save . tide-format-before-save)))
+
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+(add-hook 'web-mode-hook
+          (lambda ()
+            (when (string-equal "tsx" (file-name-extension buffer-file-name))
+              (setup-tide-mode))))
+;; enable typescript-tslint checker
+(flycheck-add-mode 'typescript-tslint 'web-mode)
+#+end_src
 ** CSV
 #+begin_src emacs-lisp :tangle yes
 (use-package csv-mode
@@ -724,45 +767,38 @@ Use rjsx-mode over js2-mode
 #+end_src
 ** Golang
 #+begin_src emacs-lisp :tangle yes
-(use-package go-mode
-  :config
-  ; Use goimports instead of go-fmt
-  (setq gofmt-command "goimports")
-  (add-hook 'go-mode-hook 'company-mode)
-  ;; Call Gofmt before saving
-  (add-hook 'before-save-hook 'gofmt-before-save)
-  (add-hook 'go-mode-hook 'setup-go-mode-compile)
-  (add-hook 'go-mode-hook #'smartparens-mode)
-  (add-hook 'go-mode-hook '(lambda ()
-			     (local-set-key (kbd "C-c C-r") 'go-remove-unused-imports)))
-  (add-hook 'go-mode-hook '(lambda ()
-			     (local-set-key (kbd "C-c C-g") 'go-goto-imports)))
-  (add-hook 'go-mode-hook (lambda ()
-			    (set (make-local-variable 'company-backends) '(company-go))
-			    (company-mode))))
+(use-package lsp-mode
+  :ensure t
+  :commands (lsp lsp-deferred)
+  :hook (go-mode . lsp-deferred))
 
-(use-package company-go
-  :after go-mode
-  :config
-  (setq tab-width 4)
+;; company-lsp integrates company mode completion with lsp-mode.
+;; completion-at-point also works out of the box but doesn't support snippets.
+(use-package company-lsp
+  :ensure t
+  :commands company-lsp)
 
-  :bind (:map go-mode-map
-  ; Godef jump key binding
-  ("M-." . godef-jump)))
+;; Set up before-save hooks to format buffer and add/delete imports.
+;; Make sure you don't have other gofmt/goimports hooks enabled.
+(defun lsp-go-install-save-hooks ()
+  (add-hook 'before-save-hook #'lsp-format-buffer t t)
+  (add-hook 'before-save-hook #'lsp-organize-imports t t))
+(add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
 
-(use-package flymake-go)
+;; Optional - provides fancier overlays.
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode)
 
-(use-package go-eldoc
-  :config
-  (add-hook 'go-mode-hook 'go-eldoc-setup))
+(setq lsp-ui-doc-enable nil
+      lsp-ui-peek-enable t
+      lsp-ui-sideline-enable t
+      lsp-ui-imenu-enable t
+      lsp-ui-flycheck-enable t)
 
-(defun setup-go-mode-compile ()
-  ; Customize compile command to run go build
-  (if (not (string-match "go" compile-command))
-      (set (make-local-variable 'compile-command)
-           "go build -v && go test -v && go vet")))
-
-(provide 'lang-go)
+(setq lsp-gopls-staticcheck t)
+(setq lsp-eldoc-render-all t)
+(setq lsp-gopls-complete-unimported t)
 #+end_src
 ** C/C++
 #+begin_src emacs-lisp :tangle yes
