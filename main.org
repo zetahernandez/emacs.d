@@ -147,10 +147,37 @@ Make the =yes or no= prompts shorter.
 *** Themes
 Material theme
 #+begin_src emacs-lisp :tangle yes
-(use-package material-theme
-  :defer t
-  :init
-  (load-theme 'material t))
+  (use-package material-theme
+    :defer t
+    :init
+    ;; (load-theme 'material t)
+    )
+
+  (use-package doom-themes
+    :config
+    ;; Global settings (defaults)
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+	  doom-themes-enable-italic t) ; if nil, italics is universally disabled
+    (load-theme 'doom-dark+ t)
+
+    ;; Enable flashing mode-line on errors
+    (doom-themes-visual-bell-config)
+
+    ;; Enable custom neotree theme (all-the-icons must be installed!)
+    ;; (doom-themes-neotree-config)
+    ;; or for treemacs users
+    ;; (setq doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
+    ;; (doom-themes-treemacs-config)
+
+    ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
+
+#+end_src
+*** Fonts
+#+begin_src emacs-lisp :tangle yes
+(use-package emojify
+  :hook (erc-mode . emojify-mode)
+  :commands emojify-mode)
 #+end_src
 *** Remove toolbar
 #+begin_src emacs-lisp :tangle yes
@@ -169,11 +196,79 @@ Load a dashboard buffer when Emacs starts
   :config
   (setq dashboard-items '((recents  . 10)
                         (bookmarks . 5)
-                        (projects . 5)
-                        (agenda . 5)))
+                        (projects . 5)))
   (dashboard-setup-startup-hook))
 #+end_src
+** Fontsize
+#+begin_src emacs-lisp :tangle yes
+(defgroup font-size nil
+  "Change font size.")
 
+(defcustom font-size--default-size 16
+  "Default font size (default 16)."
+  :type 'number
+  :group 'font-size)
+
+(defcustom font-size--current-size nil
+  "Current font size."
+  :type 'number
+  :group 'font-size)
+
+(defun font-size--adjust-current (size)
+  "Adjust current font size."
+  (custom-set-variables '(font-size--current-size size))
+  (set-face-attribute 'default nil :height (* size 10)))
+
+(defun font-size-decrease ()
+  "Decrease font size."
+  (interactive)
+  (font-size--adjust-current (- font-size--current-size 1))
+  (message "%dpt" font-size--current-size)
+  )
+
+(defun font-size-increase ()
+  "Increase font size."
+  (interactive)
+  (font-size--adjust-current (+ font-size--current-size 1))
+  (message "%dpt" font-size--current-size)
+  )
+
+(defun font-size-default ()
+  "Adjust default font size."
+  (interactive)
+  (font-size--adjust-current font-size--default-size)
+  (message "%dpt" font-size--current-size)
+  )
+
+(defun font-size-change ()
+  "Change font size interactive."
+  (interactive)
+  (catch 'end-flag
+    (while t
+      (setq action
+            (read-key-sequence-vector (format "Change font size[%dpt] (+,-,0) "
+                                              font-size--current-size)))
+      (setq c (aref action 0))
+      (cond ((= c ?+)
+             (setq size (+ font-size--current-size 1)))
+            ((= c ?-)
+             (setq size (- font-size--current-size 1)))
+            ((= c ?0)
+             (setq size font-size--default-size))
+            (t
+             (message "Quit")
+             (throw 'end-flag t)))
+      (font-size--adjust-current size)
+      )))
+
+(defun font-size-init (default-size)
+  "Initialize font-size module."
+  (custom-set-variables '(font-size--default-size default-size))
+  (font-size--adjust-current default-size))
+
+(provide 'font-size)
+
+#+end_src
 ** Suggest next key
 Suggest next keys to me based on currently entered key combination.
 
@@ -194,14 +289,20 @@ Suggest next keys to me based on currently entered key combination.
   ("C-c <right>" . windmove-right))
 #+end_src
 
-** Powerline
+** Doomline
 
 Enhance the powerline
 
 #+begin_src emacs-lisp :tangle yes
-(use-package powerline
-  :config
-  (powerline-default-theme))
+
+  (use-package minions
+    :hook (doom-modeline-mode . minions-mode)
+    :custom
+    (minions-mode-line-lighter ""))
+
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode 1))
 
 #+end_src
 
@@ -319,10 +420,16 @@ configuration here.
 
 #+end_src
 * Editing
-
 ** Delete trailing whitespace before save
 #+begin_src emacs-lisp :tangle yes
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+end_src
+** Hightlight parentheses
+#+begin_src emacs-lisp :tangle yes
+(use-package rainbow-delimiters
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+
 #+end_src
 
 ** Replace selection
@@ -414,6 +521,24 @@ Minor mode for Emacs that deals with parens pairs and tries to be smart about it
   :bind (([(meta shift up)]      . move-text-up)
          ([(meta shift down)]    . move-text-down)))
 #+end_src
+** JSON editing
+#+begin_src emacs-lisp :tangle yes
+(defun json-to-single-line (beg end)
+  "Collapse prettified json in region between BEG and END to a single line"
+  (interactive "r")
+  (if (use-region-p)
+      (save-excursion
+        (save-restriction
+          (narrow-to-region beg end)
+          (goto-char (point-min))
+          (while (re-search-forward "[[:space:]\n]+" nil t)
+            (replace-match " "))))
+    (print "This function operates on a region")))
+#+end_src
+
+#+results:
+: json-to-single-line
+
 * Coding
 ** Snippets
 #+begin_src emacs-lisp :tangle yes
@@ -442,7 +567,9 @@ A Docker client for emacs
 (use-package docker)
 ;; Dockerfile file major mode
 (use-package dockerfile-mode
-  :mode ("Dockerfile\\'" . dockerfile-mode))
+  :mode ("Dockerfile\\'" . dockerfile-mode)
+  :config
+  (setq-default indent-tabs-mode nil))
 #+end_src
 ** Kubernetes
 A Kubernetes client for emacs
@@ -469,7 +596,17 @@ A Kubernetes client for emacs
 ** YAML
 #+begin_src emacs-lisp :tangle yes
 (use-package yaml-mode
-  :mode ("\\.ya?ml\\'" . yaml-mode))
+  :mode ("\\.ya?ml\\'" . yaml-mode)
+  :init
+  (add-hook 'yaml-mode-hook 'flycheck-mode))
+
+(use-package flycheck-yamllint
+  :ensure t
+  :after yaml-mode
+  :commands (yaml-mode)
+  :init
+  (add-hook 'flycheck-mode-hook 'flycheck-yamllint-setup))
+
 
 #+end_src
 ** Flycheck
@@ -573,44 +710,47 @@ Use flychek on for sintax checking on Javascriprt
 ** Python
 I use elpy plugin for python
 #+begin_src emacs-lisp :tangle yes
-(use-package python
-  :mode ("\\.py" . python-mode)
-  :config
-  (use-package elpy
-    :init
-    (add-to-list 'auto-mode-alist '("\\.py$" . python-mode))
-    :config
-    (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
-    (setq elpy-rpc-backend "jedi")
-    (setq elpy-rpc-python-command "python3")
-    (setq python-shell-interpreter "python3")
+  ;; (use-package python
+  ;;   :mode ("\\.py" . python-mode)
+  ;;   :config
+  ;;   (use-package elpy
+  ;;     :init
+  ;;     (add-to-list 'auto-mode-alist '("\\.py$" . python-mode))
+  ;;     :config
+  ;;     (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
+  ;;     (setq elpy-rpc-backend "jedi")
+  ;;     (setq elpy-rpc-python-command "python3")
+  ;;     (setq python-shell-interpreter "python3")
 
-    (setq python-shell-interpreter "ipython3"
-      python-shell-interpreter-args "-i")
-
-    (add-hook 'python-mode-hook
-          (lambda ()
-            (set (make-local-variable 'company-backends)
-                 '((company-anaconda company-dabbrev-code company-yasnippet)))))
+  ;;     (setq python-shell-interpreter "ipython3"
+  ;;       python-shell-interpreter-args "-i")
 
 
-    ;; (add-hook 'python-mode-hook #'lsp)
-    ;; use flymake on emacs 26.1
-    ;; use flycheck not flymake with elpy
-    ;; (when (require 'flycheck nil t)
-    ;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-    ;;   (add-hook 'elpy-mode-hook 'flycheck-mode))
-    ;; (setq python-shell-interpreter "jupyter"
-    ;;       python-shell-interpreter-args "console --simple-prompt"
-    ;;       python-shell-prompt-detect-failure-warning nil)
-    ;; (add-to-list 'python-shell-completion-native-disabled-interpreters
-    ;;          "jupyter")
-    ;; (add-hook 'python-mode-hook 'py-autopep8-enable-on-save)
-    ;;flycheck-python-flake8-executable "/usr/local/bin/flake8"
-    :bind (:map elpy-mode-map
-	      ("M-." . elpy-goto-definition)
-	      ("M-," . pop-tag-mark)))
-  (elpy-enable))
+
+  ;;     (add-to-list 'company-backends 'company-jedi)
+  ;;     ;; (add-hook 'python-mode-hook
+  ;;     ;;       (lambda ()
+  ;;     ;;         (set (make-local-variable 'company-backends)
+  ;;     ;;              '((company-anaconda company-dabbrev-code company-yasnippet)))))
+
+
+  ;;     ;; (add-hook 'python-mode-hook #'lsp)
+  ;;     ;; use flymake on emacs 26.1
+  ;;     ;; use flycheck not flymake with elpy
+  ;;     ;; (when (require 'flycheck nil t)
+  ;;     ;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  ;;     ;;   (add-hook 'elpy-mode-hook 'flycheck-mode))
+  ;;     ;; (setq python-shell-interpreter "jupyter"
+  ;;     ;;       python-shell-interpreter-args "console --simple-prompt"
+  ;;     ;;       python-shell-prompt-detect-failure-warning nil)
+  ;;     ;; (add-to-list 'python-shell-completion-native-disabled-interpreters
+  ;;     ;;          "jupyter")
+  ;;     ;; (add-hook 'python-mode-hook 'py-autopep8-enable-on-save)
+  ;;     ;;flycheck-python-flake8-executable "/usr/local/bin/flake8"
+  ;;     :bind (:map elpy-mode-map
+  ;; 	      ("M-." . elpy-goto-definition)
+  ;; 	      ("M-," . pop-tag-mark)))
+  ;;   (elpy-enable))
 
 #+end_src
 
@@ -640,7 +780,7 @@ Sort imports plugins
 ** Javascript
 Use rjsx-mode over js2-mode
 #+begin_src emacs-lisp :tangle yes
-  (use-package indium)
+  ;; (use-package indium)
   (use-package rjsx-mode)
 
   (use-package js2-mode
@@ -655,8 +795,8 @@ Use rjsx-mode over js2-mode
     (custom-set-variables '(js2-strict-inconsistent-return-warning nil))
     (custom-set-variables '(js2-strict-missing-semi-warning nil))
 
-    (require 'indium)
-    (add-hook 'js-mode-hook #'indium-interaction-mode)
+    ;; (require 'indium)
+    ;; (add-hook 'js-mode-hook #'indium-interaction-mode)
 
     (require 'flycheck)
     ;; (require 'find-local-executable)
@@ -704,7 +844,7 @@ Use rjsx-mode over js2-mode
     (setq whitespace-line-column 121)
     ;; company backend for tern
     ;; http://ternjs.net/doc/manual.html#emacs
-    (use-package company-tern)
+    ;; (use-package company-tern)
     ;; Run a JavaScript interpreter in an inferior process window
     ;; https://github.com/redguardtoo/js-comint
     (use-package js-comint
@@ -721,194 +861,251 @@ Use rjsx-mode over js2-mode
 
 #+end_src
 
-
 ** Typescript
 #+begin_src emacs-lisp :tangle yes
-(defun setup-tide-mode ()
-  (interactive)
-  (tide-setup)
-  (flycheck-mode +1)
-  (setq flycheck-check-syntax-automatically '(save mode-enabled))
-  (eldoc-mode +1)
-  (tide-hl-identifier-mode +1)
-  ;; company is an optional dependency. You have to
-  ;; install it separately via package-install
-  ;; `M-x package-install [ret] company`
-  (company-mode +1))
+(use-package typescript-mode)
+  (defun setup-tide-mode ()
+    (interactive)
+    (tide-setup)
+    (flycheck-mode +1)
+    (setq flycheck-check-syntax-automatically '(save mode-enabled))
+    (eldoc-mode +1)
+    (tide-hl-identifier-mode +1)
+    ;; company is an optional dependency. You have to
+    ;; install it separately via package-install
+    ;; `M-x package-install [ret] company`
+    (company-mode +1))
 
-;; aligns annotation to the right hand side
-(setq company-tooltip-align-annotations t)
+  ;; aligns annotation to the right hand side
+  (setq company-tooltip-align-annotations t)
 
-;; formats the buffer before saving
-(add-hook 'before-save-hook 'tide-format-before-save)
+  ;; formats the buffer before saving
+  ;; (add-hook 'before-save-hook 'tide-format-before-save)
 
-(add-hook 'typescript-mode-hook #'setup-tide-mode)
+  (add-hook 'typescript-mode-hook #'setup-tide-mode)
+  (add-hook 'rjsx-mode-hook #'setup-tide-mode)
+  (add-hook 'typescript-mode-hook 'prettier-js-mode)
+  (add-hook 'typescript-mode-local-vars-hook (lambda ()
+      (flycheck-add-next-checker 'typescript-tide 'javascript-eslint 'append)))
+  (add-hook 'typescript-mode-local-vars-hook (lambda ()
+      (flycheck-add-next-checker 'tsx-tide 'javascript-eslint 'append)))
 
-(use-package tide
-  :ensure t
-  :after (typescript-mode company flycheck)
-  :hook ((typescript-mode . tide-setup)
-         (typescript-mode . tide-hl-identifier-mode)
-         (before-save . tide-format-before-save)))
+   (defun my/use-eslint-from-node-modules ()
+      (let* ((root (locate-dominating-file
+        (or (buffer-file-name) default-directory)
+	"node_modules"))
+      (eslint
+      (and root
+      (expand-file-name "node_modules/.bin/eslint"
+      root))))
+      (when (and eslint (file-executable-p eslint))
+      (setq-local flycheck-javascript-eslint-executable eslint))))
 
-(require 'web-mode)
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-(add-hook 'web-mode-hook
-          (lambda ()
-            (when (string-equal "tsx" (file-name-extension buffer-file-name))
-              (setup-tide-mode))))
-;; enable typescript-tslint checker
-(flycheck-add-mode 'typescript-tslint 'web-mode)
+(add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules)
+  (use-package tide
+    :ensure t
+    :after (typescript-mode company flycheck)
+    :hook ((typescript-mode . tide-setup)
+	   (typescript-mode . tide-hl-identifier-mode)
+	   ;; (before-save . tide-format-before-save)
+	   ))
+
+  (require 'web-mode)
+  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
+  (add-hook 'web-mode-hook
+	    (lambda ()
+	      (when (string-equal "tsx" (file-name-extension buffer-file-name))
+		(setup-tide-mode))))
+  ;; enable typescript-tslint checker
+  (flycheck-add-mode 'typescript-tslint 'web-mode)
 #+end_src
 ** CSV
 #+begin_src emacs-lisp :tangle yes
 (use-package csv-mode
   :config (setq-default csv-align-padding 2))
 #+end_src
+** LSP
+#+begin_src emacs-lisp :tangle yes
+  (use-package lsp-mode
+    :ensure t
+    :commands (lsp lsp-deferred)
+    :hook (go-mode . lsp-deferred)
+    (python-mode . lsp-deferred)
+    :config
+    (setq lsp-headerline-breadcrumb-enable t
+	gc-cons-threshold (* 100 1024 1024)
+	read-process-output-max (* 1024 1024)
+	company-idle-delay 0.0
+	company-minimum-prefix-length 1
+	create-lockfiles nil ;; lock files will kill `npm start'
+	lsp-enable-symbol-highlighting t
+	lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+	lsp-pyls-plugins-flake8-enabled t)
+    (lsp-register-custom-settings
+     '(("pyls.plugins.pyls_mypy.enabled" t t)
+     ("pyls.plugins.pyls_mypy.live_mode" nil t)
+     ("pyls.plugins.pyls_black.enabled" nil t)
+     ("pyls.plugins.pyls_isort.enabled" t t)
+
+     ;; Disable these as they're duplicated by flake8
+     ("pyls.plugins.pycodestyle.enabled" nil t)
+     ("pyls.plugins.mccabe.enabled" nil t)
+     ("pyls.plugins.pyflakes.enabled" nil t))))
+
+  (with-eval-after-load "lsp-mode"
+    (setq lsp-pyls-configuration-sources '("flake8"))
+    (setq lsp-pyls-plugins-pycodestyle-enabled nil)
+    (setq lsp-pyls-plugins-flake8-enabled t))
+
+  ;; company-lsp integrates company mode completion with lsp-mode.
+  ;; completion-at-point also works out of the box but doesn't support snippets.
+  ;; (use-package company-lsp
+  ;;   :ensure t
+  ;;   :commands company-lsp)
+  (use-package lsp-treemacs
+    :commands lsp-treemacs-errors-list)
+
+
+  (use-package helm-lsp
+    :commands helm-lsp-workspace-symbol)
+
+
+  ;; Set up before-save hooks to format buffer and add/delete imports.
+  ;; Make sure you don't have other gofmt/goimports hooks enabled.
+  (defun lsp-go-install-save-hooks ()
+    (add-hook 'before-save-hook #'lsp-format-buffer t t)
+    (add-hook 'before-save-hook #'lsp-organize-imports t t))
+  (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
+  ;; Optional - provides fancier overlays.
+
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode)
+
+  (setq lsp-ui-doc-enable nil
+	lsp-ui-peek-enable t
+	lsp-ui-sideline-enable t
+	lsp-ui-imenu-enable t
+	lsp-ui-flycheck-enable t)
+
+  (setq lsp-gopls-staticcheck t)
+  (setq lsp-eldoc-render-all t)
+  (setq lsp-gopls-complete-unimported t)
+#+end_src
 ** Golang
 #+begin_src emacs-lisp :tangle yes
-(use-package lsp-mode
-  :ensure t
-  :commands (lsp lsp-deferred)
-  :hook (go-mode . lsp-deferred))
-
-;; company-lsp integrates company mode completion with lsp-mode.
-;; completion-at-point also works out of the box but doesn't support snippets.
-(use-package company-lsp
-  :ensure t
-  :commands company-lsp)
-
-;; Set up before-save hooks to format buffer and add/delete imports.
-;; Make sure you don't have other gofmt/goimports hooks enabled.
-(defun lsp-go-install-save-hooks ()
-  (add-hook 'before-save-hook #'lsp-format-buffer t t)
-  (add-hook 'before-save-hook #'lsp-organize-imports t t))
-(add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
-
-;; Optional - provides fancier overlays.
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode)
-
-(setq lsp-ui-doc-enable nil
-      lsp-ui-peek-enable t
-      lsp-ui-sideline-enable t
-      lsp-ui-imenu-enable t
-      lsp-ui-flycheck-enable t)
-
-(setq lsp-gopls-staticcheck t)
-(setq lsp-eldoc-render-all t)
-(setq lsp-gopls-complete-unimported t)
+(use-package go-mode)
 #+end_src
 ** C/C++
 #+begin_src emacs-lisp :tangle yes
-;; C-IDE based on https://github.com/tuhdo/emacs-c-ide-demo
-(use-package cc-mode
-  :config
-  ;; Available C style:
-  ;; "gnu": The default style for GNU projects
-  ;; "k&r": What Kernighan and Ritchie, the authors of C used in their book
-  ;; "bsd": What BSD developers use, aka "Allman style" after Eric Allman.
-  ;; "whitesmith": Popularized by the examples that came with Whitesmiths C, an early commercial C compiler.
-  ;; "stroustrup": What Stroustrup, the author of C++ used in his book
-  ;; "ellemtel": Popular C++ coding standards as defined by "Programming in C++, Rules and Recommendations," Erik Nyquist and Mats Henricson, Ellemtel
-  ;; "linux": What the Linux developers use for kernel development
-  ;; "python": What Python developers use for extension modules
-  ;; "java": The default style for java-mode (see below)
-  ;; "user": When you want to define your own style
-  (setq c-default-style "gnu") ;; set style to "linux"
-  (setq gdb-many-windows t ;; use gdb-many-windows by default
-	gdb-show-main t
-	c-basic-offset 4
-	tab-width 4
-	indent-tabs-mode t))
+  ;; C-IDE based on https://github.com/tuhdo/emacs-c-ide-demo
+  (use-package cc-mode
+    :config
+    ;; Available C style:
+    ;; "gnu": The default style for GNU projects
+    ;; "k&r": What Kernighan and Ritchie, the authors of C used in their book
+    ;; "bsd": What BSD developers use, aka "Allman style" after Eric Allman.
+    ;; "whitesmith": Popularized by the examples that came with Whitesmiths C, an early commercial C compiler.
+    ;; "stroustrup": What Stroustrup, the author of C++ used in his book
+    ;; "ellemtel": Popular C++ coding standards as defined by "Programming in C++, Rules and Recommendations," Erik Nyquist and Mats Henricson, Ellemtel
+    ;; "linux": What the Linux developers use for kernel development
+    ;; "python": What Python developers use for extension modules
+    ;; "java": The default style for java-mode (see below)
+    ;; "user": When you want to define your own style
+    (setq c-default-style "gnu") ;; set style to "linux"
+    (setq gdb-many-windows t ;; use gdb-many-windows by default
+	  gdb-show-main t
+	  c-basic-offset 4
+	  tab-width 4
+	  indent-tabs-mode t))
 
-(use-package cmake-ide
-  :config
-  (add-hook 'c++-mode-hook '(lambda()
-                              (cmake-ide-setup))))
+  (use-package cmake-ide
+    :config
+    (add-hook 'c++-mode-hook '(lambda()
+				(cmake-ide-setup))))
 
-;; (use-package semantic
-;;   :config
-;;   (semanticdb-enable-gnu-global-databases 'c-mode t)
-;;   (semanticdb-enable-gnu-global-databases 'c++-mode t)
+  ;; (use-package semantic
+  ;;   :config
+  ;;   (semanticdb-enable-gnu-global-databases 'c-mode t)
+  ;;   (semanticdb-enable-gnu-global-databases 'c++-mode t)
 
-;;   (defun my-inhibit-semantic-p ()
-;;     (not (equal major-mode 'python-mode)))
+  ;;   (defun my-inhibit-semantic-p ()
+  ;;     (not (equal major-mode 'python-mode)))
 
-;;   (add-to-list 'semantic-inhibit-functions #'my-inhibit-semantic-p)
+  ;;   (add-to-list 'semantic-inhibit-functions #'my-inhibit-semantic-p)
 
-;;   (setq semanticdb-default-save-directory (expand-file-name "semanticdb/" temp-dir))
+  ;;   (setq semanticdb-default-save-directory (expand-file-name "semanticdb/" temp-dir))
 
-;;   (let ((semantic-submodes '(global-semantic-decoration-mode
-;; 			     global-semantic-idle-local-symbol-highlight-mode
-;; 			     global-semantic-highlight-func-mode
-;; 			     global-semanticdb-minor-mode
-;; 			     global-semantic-mru-bookmark-mode
-;; 			     global-semantic-idle-summary-mode
-;; 			     global-semantic-stickyfunc-mode
-;; 			     )))
-;;     (setq semantic-default-submodes (append semantic-default-submodes semantic-submodes)
-;; 	  semantic-idle-scheduler-idle-time 1))
+  ;;   (let ((semantic-submodes '(global-semantic-decoration-mode
+  ;; 			     global-semantic-idle-local-symbol-highlight-mode
+  ;; 			     global-semantic-highlight-func-mode
+  ;; 			     global-semanticdb-minor-mode
+  ;; 			     global-semantic-mru-bookmark-mode
+  ;; 			     global-semantic-idle-summary-mode
+  ;; 			     global-semantic-stickyfunc-mode
+  ;; 			     )))
+  ;;     (setq semantic-default-submodes (append semantic-default-submodes semantic-submodes)
+  ;; 	  semantic-idle-scheduler-idle-time 1))
 
-;;   (add-hook 'c-mode-common-hook (lambda () (semantic-mode 1))))
+  ;;   (add-hook 'c-mode-common-hook (lambda () (semantic-mode 1))))
 
-(use-package irony
-  :config
-  ;; replace the `completion-at-point' and `complete-symbol' bindings in
-  ;; irony-mode's buffers by irony-mode's function
-  (add-hook 'c++-mode-hook 'irony-mode)
-  (add-hook 'c-mode-hook 'irony-mode)
-  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options))
+  (use-package irony
+    :config
+    ;; replace the `completion-at-point' and `complete-symbol' bindings in
+    ;; irony-mode's buffers by irony-mode's function
+    (add-hook 'c++-mode-hook 'irony-mode)
+    (add-hook 'c-mode-hook 'irony-mode)
+    (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options))
 
-(use-package irony-eldoc
-  :config
-  (add-hook 'irony-mode-hook 'irony-eldoc))
+  (use-package irony-eldoc
+    :config
+    (add-hook 'irony-mode-hook 'irony-eldoc))
 
-(use-package company-irony
-  :config
-  (add-to-list 'company-backends 'company-keywords)
-  (add-to-list 'company-backends 'company-irony))
+  (use-package company-irony
+    :config
+    (add-to-list 'company-backends 'company-keywords)
+    (add-to-list 'company-backends 'company-irony))
 
-(use-package company-irony-c-headers
-  :config
-  (add-to-list 'company-backends 'company-irony-c-headers))
+  (use-package company-irony-c-headers
+    :config
+    (add-to-list 'company-backends 'company-irony-c-headers))
 
 
-(use-package flycheck-irony
-  :after flycheck-mode
-  :config
-  (add-hook 'flycheck-mode-hook #'flycheck-irony-setup))
+  (use-package flycheck-irony
+    :after flycheck-mode
+    :config
+    (add-hook 'flycheck-mode-hook #'flycheck-irony-setup))
 
-;; company-c-headers
-(use-package company-c-headers
-  :config
-  (add-to-list 'company-backends 'company-c-headers))
+  ;; company-c-headers
+  (use-package company-c-headers
+    :config
+    (add-to-list 'company-backends 'company-c-headers))
 
-(defun me/rtags ()
-  "Rtags configuration. Used only for nevigation."
-  (interactive)
-  (rtags-start-process-unless-running)
-  (setq rtags-display-result-backend 'ivy)
-  (add-hook 'kill-emacs-hook 'rtags-quit-rdm))
+  (defun me/rtags ()
+    "Rtags configuration. Used only for nevigation."
+    (interactive)
+    (rtags-start-process-unless-running)
+    (setq rtags-display-result-backend 'ivy)
+    (add-hook 'kill-emacs-hook 'rtags-quit-rdm))
 
-(use-package rtags
-  :commands rtags-start-process-unless-running
-  :bind (("M-."     .  rtags-find-symbol-at-point)
-         ("M-?"     .  rtags-find-references-at-point)
-         ("M-,"     .  rtags-location-stack-back)
-         ("C-,"   .    rtags-location-stack-forward)
-         ("C-c r r" .  rtags-rename-symbolrtags-next-match))
-  :config
-  (setq rtags-completions-enabled t)
-  (add-hook 'c++-mode 'me/rtags)
-  (add-hook 'c-mode 'me/rtags)
-  (message "Rtags loaded"))
+  ;; (use-package rtags
+  ;;   :commands rtags-start-process-unless-running
+  ;;   :bind (:map cc-mode-map
+  ;;          ("M-."     .  rtags-find-symbol-at-point)
+  ;;          ("M-?"     .  rtags-find-references-at-point)
+  ;;          ("M-,"     .  rtags-location-stack-back)
+  ;;          ("C-,"   .    rtags-location-stack-forward)
+  ;;          ("C-c r r" .  rtags-rename-symbolrtags-next-match))
+  ;;  :config
+  ;;   (setq rtags-completions-enabled t)
+  ;;   (add-hook 'c++-mode 'me/rtags)
+  ;;   (add-hook 'c-mode 'me/rtags)
+  ;;   (message "Rtags loaded"))
 
-(use-package company-rtags
-  :after rtags
-  :config
-  (add-to-list 'company-backends 'company-rtags))
+  ;; (use-package company-rtags
+  ;;   :after rtags
+  ;;   :config
+  ;;   (add-to-list 'company-backends 'company-rtags))
 
 #+end_src
 ** LUA
@@ -1079,7 +1276,9 @@ since it has better support than helm-rg
 (use-package helm-ag
   :config
   (setq helm-ag-base-command "rg --no-heading")
-  (bind-key* "C-c p s r" 'helm-do-ag-project-root))
+  (bind-key* "C-c p s r" 'helm-do-ag-project-root)
+  (bind-key* "C-c p s d" 'helm-do-ag)
+)
 #+end_src
 ** ls-git
 This package provides an excelent browser to search files in a project =M-x helm-browse-project= or =C-x C-d=
@@ -1123,6 +1322,8 @@ Engine mode provide shortcuts to search in diferents search engines like google,
 	:keybinding "g"))
 #+end_src
 * Org mode
+** Org Configuration
+Set up Org Mode with a baseline configuration. The following sections will add more things to it.
 #+begin_src emacs-lisp :tangle yes
 (use-package ob-restclient)
 
@@ -1190,6 +1391,48 @@ Engine mode provide shortcuts to search in diferents search engines like google,
 ;; ;; add additional languages with '((language . t)))
 
 (global-set-key (kbd "C-c a") 'org-agenda)
+
+#+end_src
+** Fonts and Bullets
+Fonts and Bullets
+#+begin_src emacs-lisp :tangle yes
+  (use-package org-superstar
+    :after org
+    :hook (org-mode . org-superstar-mode)
+    :custom
+    (org-superstar-remove-leading-stars t)
+    (org-superstar-headline-bullets-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+
+  ;; (dolist (face '((org-level-1 . 1.2)
+  ;;                 (org-level-2 . 1.1)
+  ;;                 (org-level-3 . 1.05)
+  ;;                 (org-level-4 . 1.0)
+  ;;                 (org-level-5 . 1.1)
+  ;;                 (org-level-6 . 1.1)
+  ;;                 (org-level-7 . 1.1)
+  ;;                 (org-level-8 . 1.1))))
+
+  ;; Make sure org-indent face is available
+  (require 'org-indent)
+
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
+
+  ;; TODO: Others to consider
+  ;; '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+  ;; '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+  ;; '(org-property-value ((t (:inherit fixed-pitch))) t)
+  ;; '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+  ;; '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+  ;; '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+  ;; '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
 
 #+end_src
 * Language checking
