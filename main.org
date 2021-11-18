@@ -1,3 +1,4 @@
+
 #+TITLE: Zeta Emacs configuration file
 #+AUTHOR: Zeta Hernandez
 #+EMAIL: zetahernandez@gmail.com
@@ -352,34 +353,34 @@ but in the dedicate language configuration part. This section is just for global
 ** Helm
 
 #+begin_src emacs-lisp :tangle yes
-(use-package helm
-  :bind (("M-x" . helm-M-x)
-         ("C-x C-m" . helm-M-x)
-         ("C-x C-f" . helm-find-files)
-         ("C-x C-d" . helm-browse-project)
-         ("C-x v" . helm-projectile)
-         ("C-s"     . helm-occur)
-         ("C-r"     . helm-occur)
-         ("C-x c p" . helm-projectile-ag)
-         ("C-x c k" . helm-show-kill-ring)
-         ("C-x f" . helm-recentf)
-         ("C-SPC" . helm-dabbrev)
-         ("M-y" . helm-show-kill-ring)
-         ("C-x b" . helm-buffers-list)
-         :map helm-map
-         ("<tab>" . helm-execute-persistent-action))
-  :config
-  ;; open helm buffer inside current window, don't occupy the entire other window
-  (setq helm-split-window-in-side-p t)
-  (setq helm-recentf-fuzzy-match t
-      helm-locate-fuzzy-match nil ;; locate fuzzy is worthless
-      helm-M-x-fuzzy-match t
-      helm-buffers-fuzzy-matching t
-      helm-semantic-fuzzy-match t
-      helm-apropos-fuzzy-match t
-      helm-imenu-fuzzy-match t
-      helm-lisp-fuzzy-completion t
-      helm-completion-in-region-fuzzy-match t))
+  (use-package helm
+    :bind (("M-x" . helm-M-x)
+	   ("C-x C-m" . helm-M-x)
+	   ("C-x C-f" . helm-find-files)
+	   ("C-x C-d" . helm-browse-project)
+	   ("C-x v" . helm-projectile)
+	   ("C-s"     . helm-occur)
+	   ("C-r"     . helm-occur)
+	   ("C-x c p" . helm-projectile-ag)
+	   ("C-x c k" . helm-show-kill-ring)
+	   ("C-x f" . helm-recentf)
+	   ("C-SPC" . helm-dabbrev)
+	   ("M-y" . helm-show-kill-ring)
+	   ("C-x b" . helm-buffers-list)
+	   :map helm-map
+	   ("<tab>" . helm-execute-persistent-action))
+    :config
+    ;; open helm buffer inside current window, don't occupy the entire other window
+    (setq helm-split-window-in-side-p t)
+    (setq helm-recentf-fuzzy-match t
+	  helm-locate-fuzzy-match nil ;; locate fuzzy is worthless
+	  helm-M-x-fuzzy-match t
+	  helm-buffers-fuzzy-matching t
+	  helm-semantic-fuzzy-match t
+	  helm-apropos-fuzzy-match t
+	  helm-imenu-fuzzy-match t
+	  helm-lisp-fuzzy-completion t
+	  helm-completion-in-region-fuzzy-match t))
 #+end_src
 ** Company
 In order to have inline completion, really important for coding, I use company. However I adapted
@@ -775,7 +776,9 @@ add support for mypy on flymake
 
 Sort imports plugins
 #+begin_src emacs-lisp :tangle yes
-(use-package py-isort)
+  (use-package py-isort
+    :config
+    (add-hook 'before-save-hook 'py-isort-before-save))
 #+end_src
 ** Javascript
 Use rjsx-mode over js2-mode
@@ -926,36 +929,91 @@ Use rjsx-mode over js2-mode
 #+end_src
 ** LSP
 #+begin_src emacs-lisp :tangle yes
+  (require 'lsp-pylsp)
   (use-package lsp-mode
     :ensure t
     :commands (lsp lsp-deferred)
-    :hook (go-mode . lsp-deferred)
-    (python-mode . lsp-deferred)
+    :hook (
+	   (lsp-mode . lsp-enable-which-key-integration)
+	   (python-mode . lsp-deferred)
+	   (c-mode . lsp-deferred)
+	   (go-mode . lsp-deferred)
+	   (java-mode . lsp-deferred)
+	   (js-mode . lsp-deferred)
+	   (web-mode . lsp-deferred)
+	   (vue-mode . lsp-deferred)
+	   (html-mode . lsp-deferred))
+    ;; :config
+    ;; (setq lsp-headerline-breadcrumb-enable t
+    ;; 	gc-cons-threshold (* 100 1024 1024)
+    ;; 	read-process-output-max (* 1024 1024)
+    ;; 	company-idle-delay 0.0
+    ;; 	company-minimum-prefix-length 1
+    ;; 	create-lockfiles nil ;; lock files will kill `npm start'
+    ;; 	lsp-enable-symbol-highlighting t
+    ;; 	lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+    ;; 	lsp-pylsp-plugins-flake8-enabled t
+    ;; 	lsp-pylsp.plugins.pydocstyle.enabled nil
+    ;; 	)
+
+    ;; (lsp-register-custom-settings
+    ;;  '(
+    ;;    ("pylsp.plugins.pyls_mypy.enabled" t t)
+    ;;    ("pylsp.plugins.pyls_mypy.live_mode" nil t)
+    ;;    ("pylsp.plugins.pyls_black.enabled" nil t)
+    ;;    ("pylsp.plugins.pyls_isort.enabled" t t)
+
+    ;;  ;; Disable these as they're duplicated by flake8
+    ;;    ("pylsp.plugins.pycodestyle.enabled" nil t)
+    ;;    ("pylsp.plugins.mccabe.enabled" nil t)
+    ;;    ("pylsp.plugins.pyflakes.enabled" nil t)
+    ;;    ))
+
+    :init (progn
+	    ;; (setq lsp-keymap-prefix "M-RET")
+	    (setq lsp-headerline-breadcrumb-enable t
+		  gc-cons-threshold (* 100 1024 1024)
+		  read-process-output-max (* 1024 1024)
+		  company-idle-delay 0.0
+		  company-minimum-prefix-length 1
+		  create-lockfiles nil ;; lock files will kill `npm start'
+		  lsp-enable-symbol-highlighting t
+		  lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+		  )
+	    (setq lsp-completion-enable t)
+	    (setq lsp-enable-indentation t)
+	    (setq lsp-before-save-edits t)
+	    (setq lsp-signature-render-documentation nil)
+	    (setq lsp-pyls-configuration-sources ["flake8"])
+	    (setq lsp-pyls-plugins-pycodestyle-enabled nil)
+	    (setq lsp-pyls-plugins-flake8-enabled t)
+	    ;; (setq lsp-pyls-plugins-flake8-config "~/.config/flake8")
+	    (setq lsp-pyls-plugins-pylint-enabled nil)
+	    (setq lsp-pyls-plugins-pydocstyle-enabled nil)
+	    (setq lsp-pyls-plugins-autopep8-enabled nil)
+	    (setq lsp-pyls-server-command "pylsp")
+	    )
     :config
-    (setq lsp-headerline-breadcrumb-enable t
-	gc-cons-threshold (* 100 1024 1024)
-	read-process-output-max (* 1024 1024)
-	company-idle-delay 0.0
-	company-minimum-prefix-length 1
-	create-lockfiles nil ;; lock files will kill `npm start'
-	lsp-enable-symbol-highlighting t
-	lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
-	lsp-pyls-plugins-flake8-enabled t)
     (lsp-register-custom-settings
-     '(("pyls.plugins.pyls_mypy.enabled" t t)
-     ("pyls.plugins.pyls_mypy.live_mode" nil t)
-     ("pyls.plugins.pyls_black.enabled" nil t)
-     ("pyls.plugins.pyls_isort.enabled" t t)
-
-     ;; Disable these as they're duplicated by flake8
-     ("pyls.plugins.pycodestyle.enabled" nil t)
-     ("pyls.plugins.mccabe.enabled" nil t)
-     ("pyls.plugins.pyflakes.enabled" nil t))))
-
-  (with-eval-after-load "lsp-mode"
-    (setq lsp-pyls-configuration-sources ["flake8"])
-    (setq lsp-pyls-plugins-pycodestyle-enabled nil)
-    (setq lsp-pyls-plugins-flake8-enabled t))
+     '(
+       ;; ("pylsp.configurationSources" '("flake8"))
+       ("pylsp.plugins.pyls_mypy.enabled" t t)
+       ("pylsp.plugins.pyls_mypy.live_mode" nil t)
+       ("pylsp.plugins.pyls_isort.enabled" t t)
+       ("pylsp.plugins.pyls_black.enabled" nil t)
+       ("pylsp.plugins.pycodestyle.enabled" nil t)
+       ("pylsp.plugins.pydocstyle.enabled" nil t)
+       ("pylsp.plugins.autopep8.enabled" nil t)
+       ("pylsp.plugins.pylint.enabled" nil t)
+       ("pylsp.plugins.flake8.enabled" t t)))
+    ;; (setq lsp-clients-elixir-server-executable "/home/maki/Downloads/elixir-ls/language_server.sh")
+    ;; ("pylsp.plugins.flake8.config" "~/.config/flake8")
+    (setq lsp-eldoc-hook nil)
+    )
+  ;; (with-eval-after-load "lsp-mode"
+  ;;   (setq pylsp-configuration-sources ["flake"])
+  ;;   (setq pylsp-plugins-pycodestyle-enabled nil)
+  ;;   (setq pylsp-plugins-flake8-enabled t))
 
   ;; company-lsp integrates company mode completion with lsp-mode.
   ;; completion-at-point also works out of the box but doesn't support snippets.
@@ -979,22 +1037,35 @@ Use rjsx-mode over js2-mode
   ;; Optional - provides fancier overlays.
 
   (use-package lsp-ui
-    :ensure t
+    :after lsp-mode
     :commands lsp-ui-mode
+    :hook (lsp-mode . lsp-ui-mode)
+    :init (setq lsp-ui-doc-enable t
+		lsp-ui-doc-use-webkit nil
+		lsp-ui-doc-delay .3
+		lsp-ui-doc-include-signature t
+		lsp-ui-doc-position 'bottom ;; top/bottom/at-point
+		lsp-eldoc-enable-hover nil ;; Disable eldoc displays in minibuffer
+		lsp-ui-sideline-enable t
+		lsp-ui-sideline-show-hover t
+		lsp-ui-sideline-show-code-actions t
+		lsp-ui-sideline-show-diagnostics t
+		lsp-ui-sideline-ignore-duplicate t
+		lsp-headerline-breadcrumb-enable t)
     :config
-      (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
-      (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
-    )
-
-  (setq lsp-ui-doc-enable nil
-	lsp-ui-peek-enable t
-	lsp-ui-sideline-enable t
-	lsp-ui-imenu-enable t
-	lsp-ui-flycheck-enable t)
+    (setq lsp-ui-flycheck-enable t)
+    (treemacs-resize-icons 14))
 
   (setq lsp-gopls-staticcheck t)
   (setq lsp-eldoc-render-all t)
   (setq lsp-gopls-complete-unimported t)
+
+#+end_src
+** Java
+#+begin_src emacs-lisp :tangle yes
+  (use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
+  (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
+  (use-package dap-java :ensure nil)
 #+end_src
 ** Golang
 #+begin_src emacs-lisp :tangle yes
@@ -1175,10 +1246,10 @@ Highlights uncommitted changes on the left side of the window, allows you to jum
 Helm Projectile
 #+begin_src emacs-lisp :tangle yes
 
-(use-package helm-projectile
-  :config
-  (helm-projectile-on)
-  (setq helm-projectile-fuzzy-match nil))
+  (use-package helm-projectile
+    :config
+    (helm-projectile-on)
+    (setq helm-projectile-fuzzy-match nil))
 
 #+end_src
 
@@ -1287,7 +1358,7 @@ since it has better support than helm-rg
 ** ls-git
 This package provides an excelent browser to search files in a project =M-x helm-browse-project= or =C-x C-d=
 #+begin_src emacs-lisp :tangle yes
-(use-package helm-ls-git)
+  (use-package helm-ls-git)
 #+end_src
 ** wgrep
 I use wgrep mode to edit multiple files at once when searching
@@ -1360,7 +1431,7 @@ Set up Org Mode with a baseline configuration. The following sections will add m
 	 "* %?\n%i\n")))
 
 (setq org-ditaa-jar-path "~/git/org-mode/contrib/scripts/ditaa.jar")
-(setq org-plantuml-jar-path "~/Dropbox/plantuml.jar")
+(setq org-plantuml-jar-path "~/ownCloud/plantuml.jar")
 (setq org-log-done 'time)
 
 (add-hook 'org-babel-after-execute-hook 'bh/display-inline-images 'append)
