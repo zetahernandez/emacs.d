@@ -380,7 +380,8 @@ but in the dedicate language configuration part. This section is just for global
 	  helm-apropos-fuzzy-match t
 	  helm-imenu-fuzzy-match t
 	  helm-lisp-fuzzy-completion t
-	  helm-completion-in-region-fuzzy-match t))
+	  helm-completion-in-region-fuzzy-match t)
+    )
 #+end_src
 ** Company
 In order to have inline completion, really important for coding, I use company. However I adapted
@@ -493,9 +494,9 @@ there's a region, all lines that region covers will be duplicated."
     (setq linum-format " %3d "))
 
   ;; highlight current line number
-  (use-package hlinum
-    :config
-    (hlinum-activate))
+  ;; (use-package hlinum
+  ;;   :config
+  ;;   (hlinum-activate))
 
 #+end_src
 
@@ -866,61 +867,66 @@ Use rjsx-mode over js2-mode
 
 ** Typescript
 #+begin_src emacs-lisp :tangle yes
-(use-package typescript-mode)
-  (defun setup-tide-mode ()
-    (interactive)
-    (tide-setup)
-    (flycheck-mode +1)
-    (setq flycheck-check-syntax-automatically '(save mode-enabled))
-    (eldoc-mode +1)
-    (tide-hl-identifier-mode +1)
-    ;; company is an optional dependency. You have to
-    ;; install it separately via package-install
-    ;; `M-x package-install [ret] company`
-    (company-mode +1))
+  (use-package typescript-mode
+    :mode "\\.tsx\\'"
+    :hook (typescript-mode . lsp-deferred)
+    )
 
-  ;; aligns annotation to the right hand side
-  (setq company-tooltip-align-annotations t)
 
-  ;; formats the buffer before saving
-  ;; (add-hook 'before-save-hook 'tide-format-before-save)
+      ;; (defun setup-tide-mode ()
+      ;;   (interactive)
+      ;;   (tide-setup)
+      ;;   (flycheck-mode +1)
+      ;;   (setq flycheck-check-syntax-automatically '(save mode-enabled))
+      ;;   (eldoc-mode +1)
+      ;;   (tide-hl-identifier-mode +1)
+      ;;   ;; company is an optional dependency. You have to
+      ;;   ;; install it separately via package-install
+      ;;   ;; `M-x package-install [ret] company`
+      ;;   (company-mode +1))
 
-  (add-hook 'typescript-mode-hook #'setup-tide-mode)
-  (add-hook 'rjsx-mode-hook #'setup-tide-mode)
-  (add-hook 'typescript-mode-hook 'prettier-js-mode)
-  (add-hook 'typescript-mode-local-vars-hook (lambda ()
-      (flycheck-add-next-checker 'typescript-tide 'javascript-eslint 'append)))
-  (add-hook 'typescript-mode-local-vars-hook (lambda ()
-      (flycheck-add-next-checker 'tsx-tide 'javascript-eslint 'append)))
+      ;; ;; aligns annotation to the right hand side
+      ;; (setq company-tooltip-align-annotations t)
 
-   (defun my/use-eslint-from-node-modules ()
-      (let* ((root (locate-dominating-file
-        (or (buffer-file-name) default-directory)
-	"node_modules"))
-      (eslint
-      (and root
-      (expand-file-name "node_modules/.bin/eslint"
-      root))))
-      (when (and eslint (file-executable-p eslint))
-      (setq-local flycheck-javascript-eslint-executable eslint))))
+      ;; ;; formats the buffer before saving
+      ;; ;; (add-hook 'before-save-hook 'tide-format-before-save)
 
-(add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules)
-  (use-package tide
-    :ensure t
-    :after (typescript-mode company flycheck)
-    :hook ((typescript-mode . tide-setup)
-	   (typescript-mode . tide-hl-identifier-mode)
-	   ;; (before-save . tide-format-before-save)
-	   ))
+      ;; (add-hook 'typescript-mode-hook #'setup-tide-mode)
+      ;; (add-hook 'rjsx-mode-hook #'setup-tide-mode)
+      ;; (add-hook 'typescript-mode-hook 'prettier-js-mode)
+      ;; (add-hook 'typescript-mode-local-vars-hook (lambda ()
+      ;;     (flycheck-add-next-checker 'typescript-tide 'javascript-eslint 'append)))
+      ;; (add-hook 'typescript-mode-local-vars-hook (lambda ()
+      ;;     (flycheck-add-next-checker 'tsx-tide 'javascript-eslint 'append)))
 
-  (require 'web-mode)
-  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
-  (add-hook 'web-mode-hook
-	    (lambda ()
-	      (when (string-equal "tsx" (file-name-extension buffer-file-name))
-		(setup-tide-mode))))
-  ;; enable typescript-tslint checker
-  (flycheck-add-mode 'typescript-tslint 'web-mode)
+      ;;  (defun my/use-eslint-from-node-modules ()
+      ;;     (let* ((root (locate-dominating-file
+      ;;       (or (buffer-file-name) default-directory)
+      ;; 	"node_modules"))
+      ;;     (eslint
+      ;;     (and root
+      ;;     (expand-file-name "node_modules/.bin/eslint"
+      ;;     root))))
+      ;;     (when (and eslint (file-executable-p eslint))
+      ;;     (setq-local flycheck-javascript-eslint-executable eslint))))
+
+    ;; (add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules)
+    ;;   (use-package tide
+    ;;     :ensure t
+    ;;     :after (typescript-mode company flycheck)
+    ;;     :hook ((typescript-mode . tide-setup)
+    ;; 	     (typescript-mode . tide-hl-identifier-mode)
+    ;; 	     ;; (before-save . tide-format-before-save)
+    ;; 	     ))
+
+    ;;   (require 'web-mode)
+    ;;   (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
+    ;;   (add-hook 'web-mode-hook
+    ;; 	      (lambda ()
+    ;; 		(when (string-equal "tsx" (file-name-extension buffer-file-name))
+    ;; 		  (setup-tide-mode))))
+    ;;   ;; enable typescript-tslint checker
+    ;;   (flycheck-add-mode 'typescript-tslint 'web-mode)
 #+end_src
 ** CSV
 #+begin_src emacs-lisp :tangle yes
@@ -935,11 +941,13 @@ Use rjsx-mode over js2-mode
     :commands (lsp lsp-deferred)
     :hook (
 	   (lsp-mode . lsp-enable-which-key-integration)
-	   (python-mode . lsp-deferred)
+	   ;; (python-mode . lsp-deferred)
 	   (c-mode . lsp-deferred)
 	   (go-mode . lsp-deferred)
 	   (java-mode . lsp-deferred)
 	   (js-mode . lsp-deferred)
+	   (json-mode . lsp-deferred)
+	   (ts-mode . lsp-deferred)
 	   (web-mode . lsp-deferred)
 	   (vue-mode . lsp-deferred)
 	   (html-mode . lsp-deferred))
@@ -990,7 +998,7 @@ Use rjsx-mode over js2-mode
 	    ;; (setq lsp-pyls-plugins-flake8-config "~/.config/flake8")
 	    (setq lsp-pyls-plugins-pylint-enabled nil)
 	    (setq lsp-pyls-plugins-pydocstyle-enabled nil)
-	    (setq lsp-pyls-plugins-autopep8-enabled nil)
+	    (setq lsp-pylsp-plugins-autopep8-enabled t)
 	    (setq lsp-pyls-server-command "pylsp")
 	    )
     :config
@@ -1003,7 +1011,7 @@ Use rjsx-mode over js2-mode
        ("pylsp.plugins.pyls_black.enabled" nil t)
        ("pylsp.plugins.pycodestyle.enabled" nil t)
        ("pylsp.plugins.pydocstyle.enabled" nil t)
-       ("pylsp.plugins.autopep8.enabled" nil t)
+       ("pylsp.plugins.autopep8.enabled" t t)
        ("pylsp.plugins.pylint.enabled" nil t)
        ("pylsp.plugins.flake8.enabled" t t)))
     ;; (setq lsp-clients-elixir-server-executable "/home/maki/Downloads/elixir-ls/language_server.sh")
@@ -1027,6 +1035,13 @@ Use rjsx-mode over js2-mode
   (use-package helm-lsp
     :commands helm-lsp-workspace-symbol)
 
+  (use-package lsp-pyright
+    :ensure t
+    :hook (python-mode . (lambda ()
+			   (require 'lsp-pyright)
+			   (lsp-deferred)))  ; or lsp-deferred
+    :init (when (executable-find "python3")
+	    (setq lsp-pyright-python-executable-cmd "python3")))
 
   ;; Set up before-save hooks to format buffer and add/delete imports.
   ;; Make sure you don't have other gofmt/goimports hooks enabled.
@@ -1249,7 +1264,8 @@ Helm Projectile
   (use-package helm-projectile
     :config
     (helm-projectile-on)
-    (setq helm-projectile-fuzzy-match nil))
+    (setq helm-projectile-fuzzy-match nil)
+    )
 
 #+end_src
 

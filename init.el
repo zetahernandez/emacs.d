@@ -34,7 +34,7 @@
    '("~/ownCloud/orgfiles/i.org" "~/ownCloud/orgfiles/schedule.org"))
  '(org-support-shift-select t)
  '(package-selected-packages
-   '(docker-compose-mode flycheck-yamllint apparmor-mode prettier-js pyimport git-link terraform-mode go-mode company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element htmlize helm-company elpy ox-rst ob-restclient diff-hl helm-gitignore gitignore-mode copy-as-format powerline dashboard all-the-icons engine-mode helm-ls-git helm-ag treemacs-icons-dired treemacs-magit treemacs-projectile treemacs helm-projectile projectile helm js-comint company-tern tern exec-path-from-shell yasnippet-snippets web-mode use-package smex smartparens rjsx-mode restclient py-isort move-text material-theme markdown-mode kubernetes k8s-mode indium hlinum flycheck dockerfile-mode docker))
+   '(jq-mode sqlformat docker-compose-mode flycheck-yamllint apparmor-mode prettier-js pyimport git-link terraform-mode go-mode company-web ac-html-bootstrap ac-html-angular emmet-mode web-mode-edit-element htmlize helm-company elpy ox-rst ob-restclient diff-hl helm-gitignore gitignore-mode copy-as-format powerline dashboard all-the-icons engine-mode helm-ls-git helm-ag treemacs-icons-dired treemacs-magit treemacs-projectile treemacs helm-projectile projectile helm js-comint company-tern tern exec-path-from-shell yasnippet-snippets web-mode use-package smex smartparens rjsx-mode restclient py-isort move-text material-theme markdown-mode kubernetes k8s-mode indium hlinum flycheck dockerfile-mode docker))
  '(prettier-js-command
    "~/flieber/flieber-be/frontend-app/node_modules/prettier/bin-prettier.js")
  '(typescript-indent-level 2)
