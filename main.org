@@ -712,7 +712,23 @@ Use flychek on for sintax checking on Javascriprt
 ** Python
 I use elpy plugin for python
 #+begin_src emacs-lisp :tangle yes
-  ;; (use-package python
+(use-package pyenv-mode
+  :ensure t
+  :after python
+  :config
+
+  (defun projectile-pyenv-mode-set ()
+    "Set pyenv version matching project name."
+    (let ((project (projectile-project-name)))
+      (if (member project (pyenv-mode-versions))
+          (pyenv-mode-set project)
+        (pyenv-mode-unset))))
+
+  (when (executable-find "pyenv")
+    (add-to-list 'exec-path (expand-file-name "shims" (or (getenv "PYENV_ROOT") "~/.pyenv"))))
+  :hook((python-mode)
+        (projectile-switch-project . projectile-pyenv-mode-set)))
+ ;; (use-package python
   ;;   :mode ("\\.py" . python-mode)
   ;;   :config
   ;;   (use-package elpy
@@ -951,6 +967,7 @@ Use rjsx-mode over js2-mode
 	   (web-mode . lsp-deferred)
 	   (vue-mode . lsp-deferred)
 	   (html-mode . lsp-deferred))
+
     ;; :config
     ;; (setq lsp-headerline-breadcrumb-enable t
     ;; 	gc-cons-threshold (* 100 1024 1024)
@@ -1017,7 +1034,24 @@ Use rjsx-mode over js2-mode
     ;; (setq lsp-clients-elixir-server-executable "/home/maki/Downloads/elixir-ls/language_server.sh")
     ;; ("pylsp.plugins.flake8.config" "~/.config/flake8")
     (setq lsp-eldoc-hook nil)
-    )
+    ;; Ignore setting up watches on gitignored paths
+    ;; https://github.com/emacs-lsp/lsp-mode/issues/713#issuecomment-985653873
+    (defun ++git-ignore-p (path)
+      (let* (; trailing / breaks git check-ignore if path is a symlink:
+	   (path (directory-file-name path))
+	   (default-directory (file-name-directory path))
+	   (relpath (file-name-nondirectory path))
+	   (cmd (format "git check-ignore '%s'" relpath))
+	   (status (call-process-shell-command cmd)))
+      (eq status 0)))
+
+    (defun ++lsp--path-is-watchable-directory-a
+	(fn path dir ignored-directories)
+      (and (not (++git-ignore-p (f-join dir path)))
+	   (funcall fn path dir ignored-directories)))
+
+    (advice-add 'lsp--path-is-watchable-directory
+	      :around #'++lsp--path-is-watchable-directory-a))
   ;; (with-eval-after-load "lsp-mode"
   ;;   (setq pylsp-configuration-sources ["flake"])
   ;;   (setq pylsp-plugins-pycodestyle-enabled nil)
@@ -1041,8 +1075,22 @@ Use rjsx-mode over js2-mode
 			   (require 'lsp-pyright)
 			   (lsp-deferred)))  ; or lsp-deferred
     :init (when (executable-find "python3")
-	    (setq lsp-pyright-python-executable-cmd "python3")))
+	    (setq lsp-pyright-python-executable-cmd "python3"))
+    :custom
+      (lsp-intelephense-multi-root nil)
+      (lsp-pyright-multi-root nil)
+    :config
+     (defun expand-absolute-name (name)
+       (if (file-name-absolute-p name)
+	   (tramp-file-local-name
+	    (expand-file-name
+	     (concat (file-remote-p default-directory) name)))
+	 name))
 
+     (lsp-register-custom-settings
+      `(("python.analysis.stubPath" (lambda () (expand-absolute-name lsp-pyright-stub-path)))
+	("python.venvPath" (lambda () (if lsp-pyright-venv-path
+				     (expand-absolute-name lsp-pyright-venv-path) ""))))))
   ;; Set up before-save hooks to format buffer and add/delete imports.
   ;; Make sure you don't have other gofmt/goimports hooks enabled.
   (defun lsp-go-install-save-hooks ()
@@ -1062,11 +1110,15 @@ Use rjsx-mode over js2-mode
 		lsp-ui-doc-position 'bottom ;; top/bottom/at-point
 		lsp-eldoc-enable-hover nil ;; Disable eldoc displays in minibuffer
 		lsp-ui-sideline-enable t
+		lsp-ui-sideline-diagnostic-max-lines 3
 		lsp-ui-sideline-show-hover t
 		lsp-ui-sideline-show-code-actions t
 		lsp-ui-sideline-show-diagnostics t
 		lsp-ui-sideline-ignore-duplicate t
 		lsp-headerline-breadcrumb-enable t)
+    :bind (:map lsp-ui-mode-map
+	      ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+	      ([remap xref-find-references] . lsp-ui-peek-find-references))
     :config
     (setq lsp-ui-flycheck-enable t)
     (treemacs-resize-icons 14))
@@ -1074,6 +1126,20 @@ Use rjsx-mode over js2-mode
   (setq lsp-gopls-staticcheck t)
   (setq lsp-eldoc-render-all t)
   (setq lsp-gopls-complete-unimported t)
+
+#+end_src
+
+** Terraform
+#+begin_src emacs-lisp :tangle yes
+  (use-package terraform-mode
+  :ensure t
+  :defer t
+  :mode (
+         ("\\.tf\\'" . terraform-mode)
+         )
+  :config
+  (add-hook 'terraform-mode-hook
+            (lambda () (add-hook 'before-save-hook  #'terraform-format-buffer))))
 
 #+end_src
 ** Java
