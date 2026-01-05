@@ -1,0 +1,30 @@
+# Paquetes instalados (se reinstalan automáticamente)
+elpa/
+
+# Cache y archivos compilados
+eln-cache/
+.cache/
+*.elc
+
+# Archivos de sesión y estado
+auto-save-list/
+backups/
+auto-save/
+recentf
+savehist
+places
+projects
+.lsp-session-v1
+transient/
+url/
+
+# Custom variables (generadas por Emacs)
+custom.el
+
+# Archivos temporales
+*~
+\#*\#
+.\#*
+
+# Archivos del sistema
+.DS_Store
