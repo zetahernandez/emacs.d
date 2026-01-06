@@ -12,11 +12,10 @@
 (use-package project
   :ensure nil  ; built-in
   :bind
-  (("C-x p f" . project-find-file)
+  (;; C-x p f and C-x p g replaced by fzf versions below
    ("C-x p p" . project-switch-project)
    ("C-x p b" . project-switch-to-buffer)
    ("C-x p d" . project-find-dir)
-   ("C-x p g" . project-find-regexp)
    ("C-x p r" . project-query-replace-regexp)
    ("C-x p c" . project-compile)
    ("C-x p s" . project-shell)
@@ -29,14 +28,8 @@
   (when (executable-find "fd")
     (setq project-find-functions '(project-try-vc)))
 
-  ;; Agregar proyectos conocidos
-  (setq project-switch-commands
-        '((project-find-file "Find file" ?f)
-          (project-find-regexp "Find regexp" ?g)
-          (project-find-dir "Find dir" ?d)
-          (project-vc-dir "VC dir" ?v)
-          (project-shell "Shell" ?s)
-          (magit-project-status "Magit" ?m))))
+  ;; project-switch-commands se configura después de cargar fzf
+  )
 
 ;; ============================================================
 ;; Auto-discover projects in ~/dev
@@ -68,6 +61,111 @@
 ;; Ya configurado en completion-consult.el:
 ;; - C-x p b -> consult-project-buffer
 ;; - M-s r   -> consult-ripgrep (respeta proyecto)
+
+;; ============================================================
+;; fzf.el - Fuzzy finder integration
+;; ============================================================
+(use-package fzf
+  :demand t
+  :config
+  (setq fzf/args "-x --print-query --margin=1,0 --no-hscroll"
+        fzf/executable "fzf"
+        fzf/position-bottom t
+        fzf/window-height 15)
+
+  ;; Use ripgrep for text search
+  (setq fzf/grep-command "rg --no-heading --line-number --color=never")
+
+  ;; Use fdfind for file finding (respects .gitignore)
+  (setq fzf/directory-start-command "fdfind --type f --follow --exclude .git"))
+
+;; Project-aware fzf commands (defined after fzf loads)
+(defun zeta/fzf-project-find-file ()
+  "Find file in current project using fzf + fdfind."
+  (interactive)
+  (require 'fzf)
+  (let ((project (project-current)))
+    (if project
+        (let ((default-directory (project-root project)))
+          (fzf-with-command
+           "fdfind --type f --follow --exclude .git"
+           (lambda (x)
+             (let ((f (expand-file-name x default-directory)))
+               (when (file-exists-p f)
+                 (find-file f))))
+           default-directory))
+      (user-error "Not in a project"))))
+
+(defun zeta/fzf-rg-action (result)
+  "Open file from ripgrep RESULT (format: file:line:col:text)."
+  (when (and result (not (string-empty-p result)))
+    ;; Remove ANSI color codes
+    (let* ((clean (ansi-color-filter-apply result))
+           (parts (split-string clean ":"))
+           (file (car parts))
+           (line (string-to-number (or (nth 1 parts) "1"))))
+      (when (and file (file-exists-p file))
+        (find-file file)
+        (goto-char (point-min))
+        (forward-line (1- line))))))
+
+(defun zeta/fzf-project-grep ()
+  "Live ripgrep search in current project using fzf."
+  (interactive)
+  (require 'fzf)
+  (let ((project (project-current)))
+    (if project
+        (let* ((default-directory (project-root project))
+               (rg-base "rg --column --line-number --no-heading --color=always --smart-case -- ")
+               ;; Override fzf args for live reload mode
+               (fzf/args (concat "--ansi --disabled "
+                                 "--bind \"start:reload:" rg-base " {q} || true\" "
+                                 "--bind \"change:reload:sleep 0.05; " rg-base " {q} || true\" "
+                                 "--delimiter : "
+                                 "--print-query --margin=1,0 --no-hscroll")))
+          (fzf--start default-directory #'zeta/fzf-rg-action))
+      (user-error "Not in a project"))))
+
+;; Bind to project-prefix-map
+(with-eval-after-load 'project
+  (define-key project-prefix-map (kbd "f") #'zeta/fzf-project-find-file)
+  (define-key project-prefix-map (kbd "g") #'zeta/fzf-project-grep)
+
+  ;; Update project-switch-commands to use fzf
+  (setq project-switch-commands
+        '((zeta/fzf-project-find-file "Find file (fzf)" ?f)
+          (zeta/fzf-project-grep "Find text (rg+fzf)" ?g)
+          (project-find-dir "Find dir" ?d)
+          (project-vc-dir "VC dir" ?v)
+          (project-shell "Shell" ?s)
+          (magit-project-status "Magit" ?m))))
+
+;; Global fzf bindings
+(defun zeta/fzf-find-file ()
+  "Find file in current directory using fzf + fdfind."
+  (interactive)
+  (require 'fzf)
+  (fzf-with-command
+   "fdfind --type f --follow --exclude .git"
+   (lambda (x)
+     (let ((f (expand-file-name x default-directory)))
+       (when (file-exists-p f)
+         (find-file f))))
+   default-directory))
+(global-set-key (kbd "C-c z") #'zeta/fzf-find-file)
+;; C-c Z uses same live rg but in current directory
+(defun zeta/fzf-rg-live ()
+  "Live ripgrep search in current directory."
+  (interactive)
+  (require 'fzf)
+  (let* ((rg-base "rg --column --line-number --no-heading --color=always --smart-case -- ")
+         (fzf/args (concat "--ansi --disabled "
+                           "--bind \"start:reload:" rg-base " {q} || true\" "
+                           "--bind \"change:reload:sleep 0.05; " rg-base " {q} || true\" "
+                           "--delimiter : "
+                           "--print-query --margin=1,0 --no-hscroll")))
+    (fzf--start default-directory #'zeta/fzf-rg-action)))
+(global-set-key (kbd "C-c Z") #'zeta/fzf-rg-live)
 
 (provide 'tools-project)
 ;;; tools-project.el ends here
