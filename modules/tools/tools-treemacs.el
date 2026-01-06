@@ -78,5 +78,20 @@
   :config
   (treemacs-load-theme "nerd-icons"))
 
+;; ============================================================
+;; Treemacs + project.el integration
+;; ============================================================
+;; Sync treemacs when switching projects with C-x p p
+(defun zeta/treemacs-switch-to-project ()
+  "Switch treemacs to current project after project-switch-project."
+  (when (and (fboundp 'treemacs-display-current-project-exclusively)
+             (treemacs-get-local-window))
+    (treemacs-display-current-project-exclusively)))
+
+;; Hook into project-switch-project
+(advice-add 'project-switch-project :after
+            (lambda (&rest _)
+              (run-at-time 0.1 nil #'zeta/treemacs-switch-to-project)))
+
 (provide 'tools-treemacs)
 ;;; tools-treemacs.el ends here
