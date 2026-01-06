@@ -13,6 +13,7 @@ Configuración modular para Emacs 30.2+ con stack moderno de completion y LSP.
 - **Tree-sitter** - Syntax highlighting mejorado para Python, TypeScript, TSX, JavaScript
 - **nvm.el** - Detección automática de versión de Node por proyecto (.nvmrc)
 - **fzf** - Fuzzy finder integrado con fdfind y ripgrep para búsqueda rápida
+- **AI Copilot** - gptel (chat con Claude/Gemini) + GitHub Copilot (inline completion)
 
 ## Requisitos
 
@@ -164,7 +165,24 @@ M-x nerd-icons-install-fonts RET
 M-x all-the-icons-install-fonts RET
 ```
 
-### 10. Iniciar Emacs
+### 10. AI Copilot (gptel + GitHub Copilot)
+
+```bash
+# Variables de entorno para gptel (agregar a ~/.zshrc)
+export CLAUDE_API_KEY="tu-api-key-de-anthropic"
+export GEMINI_API_KEY="tu-api-key-de-google"  # opcional
+```
+
+Dentro de Emacs, instalar el servidor de Copilot y autenticarse:
+
+```
+M-x copilot-install-server RET    ; Instala @github/copilot-language-server
+M-x copilot-login RET             ; Autentica con tu cuenta de GitHub
+```
+
+> **Nota**: gptel usa Claude Opus como modelo por defecto. GitHub Copilot requiere una cuenta (tiene tier gratis desde 2025).
+
+### 11. Iniciar Emacs
 
 ```bash
 emacs &
@@ -200,6 +218,8 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 │       ├── lang-python.el          # Python + pyright + ruff
 │       ├── lang-typescript.el      # TypeScript/React + nvm.el
 │       └── lang-markdown.el        # Markdown + mermaid
+│   └── tools/
+│       └── tools-ai.el             # AI: gptel + GitHub Copilot
 └── tree-sitter/
     ├── libtree-sitter-python.so
     ├── libtree-sitter-typescript.so
@@ -359,6 +379,25 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 | `C-c C-i` | markdown-insert-image | Insertar imagen |
 | `C-c C-t` | markdown-toc-generate-or-refresh-toc | Generar TOC |
 | `C-c '` | markdown-edit-code-block | Editar bloque de código |
+
+### AI (gptel + Copilot)
+
+| Keybinding | Comando | Descripción |
+|------------|---------|-------------|
+| `C-c a a` | gptel | Abrir/toggle buffer de chat |
+| `C-c a s` | gptel-send | Enviar región/buffer al LLM |
+| `C-c a m` | gptel-menu | Menú transient con opciones |
+| `C-c a r` | gptel-rewrite | Reescribir región con IA |
+| `C-c a b` | gptel-add | Agregar archivo/contexto al chat |
+| `C-c a k` | gptel-abort | Cancelar request en progreso |
+| `C-c a e` | zeta/ai-explain-region | Explicar código seleccionado |
+| `C-c a i` | zeta/ai-improve-region | Sugerir mejoras al código |
+| `C-c a d` | zeta/ai-generate-docstring | Generar docstring |
+| `Tab` | copilot-accept-completion | Aceptar sugerencia de Copilot |
+| `C-Tab` | copilot-accept-completion-by-word | Aceptar palabra por palabra |
+| `M-n` / `M-p` | copilot-next/previous-completion | Navegar sugerencias |
+
+> `C-c a m` abre un menú transient donde puedes cambiar modelo, backend (Claude/Gemini), system prompt, etc.
 
 ## Notas
 
