@@ -54,6 +54,7 @@
 ;; ============================================================
 (zeta/load-module "lang" "lang-lsp")
 (zeta/load-module "lang" "lang-python")
+(zeta/load-module "lang" "lang-typescript")
 (zeta/load-module "lang" "lang-markdown")
 
 ;; ============================================================

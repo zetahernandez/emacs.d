@@ -26,5 +26,11 @@ custom.el
 \#*\#
 .\#*
 
+# Tree-sitter compiled grammars (platform-specific, compile per README)
+tree-sitter/*.so
+
+# Session files
+session.*
+
 # Archivos del sistema
 .DS_Store

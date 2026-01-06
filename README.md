@@ -6,11 +6,12 @@ Configuración modular para Emacs 30.2+ con stack moderno de completion y LSP.
 
 - **Arquitectura modular** - Configuración dividida en módulos lógicos
 - **Completion moderno** - Vertico + Consult + Corfu (reemplaza Helm + Company)
-- **LSP** - lsp-mode con pyright + ruff para Python
+- **LSP** - lsp-mode con pyright + ruff para Python, typescript-language-server para TS/React
 - **Git** - Magit + diff-hl
 - **Proyectos** - project.el built-in (reemplaza Projectile)
 - **File tree** - Treemacs con nerd-icons
-- **Tree-sitter** - Syntax highlighting mejorado para Python
+- **Tree-sitter** - Syntax highlighting mejorado para Python, TypeScript, TSX, JavaScript
+- **nvm.el** - Detección automática de versión de Node por proyecto (.nvmrc)
 
 ## Requisitos
 
@@ -82,30 +83,70 @@ uv tool install grip
 npm install -g @mermaid-js/mermaid-cli
 ```
 
-### 5. Tree-sitter grammar para Python
+### 5. Dependencias para TypeScript/React
 
 ```bash
-# IMPORTANTE: Usar versión v0.23.2 (ABI 14)
+# TypeScript Language Server
+npm install -g typescript-language-server typescript
+```
+
+> **Nota**: La configuración usa `nvm.el` para detectar automáticamente la versión de Node de cada proyecto via `.nvmrc`. Cada proyecto debe tener su propio `.nvmrc`:
+> ```bash
+> echo "22" > .nvmrc
+> nvm use
+> ```
+
+### 6. Tree-sitter grammars
+
+```bash
+# IMPORTANTE: Usar versiones con ABI 14
 # Las versiones nuevas usan ABI 15 que Emacs 30.2 no soporta
 
 mkdir -p ~/.emacs.d/tree-sitter
+
+# Python
 git clone --depth 1 -b v0.23.2 \
   https://github.com/tree-sitter/tree-sitter-python.git /tmp/ts-python
 cd /tmp/ts-python
-cc -fPIC -shared -o libtree-sitter-python.so \
-  src/parser.c src/scanner.c -I src -O2
+cc -fPIC -shared -o libtree-sitter-python.so src/parser.c src/scanner.c -I src -O2
 cp libtree-sitter-python.so ~/.emacs.d/tree-sitter/
-rm -rf /tmp/ts-python
+
+# TypeScript y TSX
+git clone --depth 1 -b v0.20.3 \
+  https://github.com/tree-sitter/tree-sitter-typescript.git /tmp/ts-typescript
+cd /tmp/ts-typescript/typescript
+cc -fPIC -shared -o libtree-sitter-typescript.so src/parser.c src/scanner.c -I src -O2
+cp libtree-sitter-typescript.so ~/.emacs.d/tree-sitter/
+cd /tmp/ts-typescript/tsx
+cc -fPIC -shared -o libtree-sitter-tsx.so src/parser.c src/scanner.c -I src -O2
+cp libtree-sitter-tsx.so ~/.emacs.d/tree-sitter/
+
+# JavaScript
+git clone --depth 1 -b v0.21.2 \
+  https://github.com/tree-sitter/tree-sitter-javascript.git /tmp/ts-javascript
+cd /tmp/ts-javascript
+cc -fPIC -shared -o libtree-sitter-javascript.so src/parser.c src/scanner.c -I src -O2
+cp libtree-sitter-javascript.so ~/.emacs.d/tree-sitter/
+
+# JSON
+git clone --depth 1 -b v0.20.2 \
+  https://github.com/tree-sitter/tree-sitter-json.git /tmp/ts-json
+cd /tmp/ts-json
+cc -fPIC -shared -o libtree-sitter-json.so src/parser.c -I src -O2
+cp libtree-sitter-json.so ~/.emacs.d/tree-sitter/
+
+# Limpiar
+rm -rf /tmp/ts-python /tmp/ts-typescript /tmp/ts-javascript /tmp/ts-json
 ```
 
-### 6. Instalar fuentes (dentro de Emacs)
+### 7. Instalar fuentes (dentro de Emacs)
 
 ```
 M-x nerd-icons-install-fonts RET
 M-x all-the-icons-install-fonts RET
 ```
 
-### 7. Iniciar Emacs
+### 8. Iniciar Emacs
 
 ```bash
 emacs &
@@ -139,9 +180,14 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 │   └── lang/
 │       ├── lang-lsp.el             # LSP base
 │       ├── lang-python.el          # Python + pyright + ruff
+│       ├── lang-typescript.el      # TypeScript/React + nvm.el
 │       └── lang-markdown.el        # Markdown + mermaid
 └── tree-sitter/
-    └── libtree-sitter-python.so    # Grammar compilado
+    ├── libtree-sitter-python.so
+    ├── libtree-sitter-typescript.so
+    ├── libtree-sitter-tsx.so
+    ├── libtree-sitter-javascript.so
+    └── libtree-sitter-json.so
 ```
 
 ## Decisiones de Diseño
@@ -260,6 +306,17 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 |------------|---------|-------------|
 | `C-c C-f` | zeta/python-format-buffer | Formatear con ruff |
 | `C-c C-p` | run-python | Iniciar intérprete |
+
+### TypeScript/React
+
+| Keybinding | Comando | Descripción |
+|------------|---------|-------------|
+| `C-c C-f` | zeta/typescript-format-buffer | Formatear con LSP |
+| `C-c l r` | lsp-rename | Renombrar símbolo |
+| `C-c l a` | lsp-execute-code-action | Quick fix, imports |
+| `C-c l R` | lsp-find-references | Buscar referencias |
+
+> Los keybindings LSP (`C-c l ...`) son los mismos que para Python.
 
 ### Markdown
 
