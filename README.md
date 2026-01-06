@@ -12,6 +12,7 @@ Configuración modular para Emacs 30.2+ con stack moderno de completion y LSP.
 - **File tree** - Treemacs con nerd-icons
 - **Tree-sitter** - Syntax highlighting mejorado para Python, TypeScript, TSX, JavaScript
 - **nvm.el** - Detección automática de versión de Node por proyecto (.nvmrc)
+- **fzf** - Fuzzy finder integrado con fdfind y ripgrep para búsqueda rápida
 
 ## Requisitos
 
@@ -19,6 +20,9 @@ Configuración modular para Emacs 30.2+ con stack moderno de completion y LSP.
 - Emacs 30.2+ compilado desde source
 - Node.js (para mermaid-cli)
 - uv (para herramientas Python)
+- fzf (fuzzy finder)
+- fd-find (buscador de archivos rápido)
+- ripgrep (búsqueda de texto)
 
 ## Instalación
 
@@ -44,7 +48,21 @@ make -j$(nproc)
 sudo make install
 ```
 
-### 2. Clonar esta configuración
+### 2. Herramientas de búsqueda (fzf + fd + ripgrep)
+
+```bash
+# fzf - fuzzy finder
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+~/.fzf/install
+
+# fd-find - buscador de archivos rápido (respeta .gitignore)
+sudo apt install fd-find
+
+# ripgrep - búsqueda de texto rápida
+sudo apt install ripgrep
+```
+
+### 3. Clonar esta configuración
 
 ```bash
 # Backup de configuración existente (si existe)
@@ -54,7 +72,7 @@ mv ~/.emacs.d ~/.emacs.d.backup
 git clone <repo-url> ~/.emacs.d
 ```
 
-### 3. Dependencias para Python
+### 5. Dependencias para Python
 
 ```bash
 # Pyright - LSP server para tipos y autocompletado
@@ -70,7 +88,7 @@ uv tool install ruff
 > ```
 > La configuración detecta automáticamente el ruff del proyecto via `pet`.
 
-### 4. Dependencias para Markdown
+### 6. Dependencias para Markdown
 
 ```bash
 # Pandoc - export y preview
@@ -83,7 +101,7 @@ uv tool install grip
 npm install -g @mermaid-js/mermaid-cli
 ```
 
-### 5. Dependencias para TypeScript/React
+### 7. Dependencias para TypeScript/React
 
 ```bash
 # TypeScript Language Server
@@ -96,7 +114,7 @@ npm install -g typescript-language-server typescript
 > nvm use
 > ```
 
-### 6. Tree-sitter grammars
+### 8. Tree-sitter grammars
 
 ```bash
 # IMPORTANTE: Usar versiones con ABI 14
@@ -139,14 +157,14 @@ cp libtree-sitter-json.so ~/.emacs.d/tree-sitter/
 rm -rf /tmp/ts-python /tmp/ts-typescript /tmp/ts-javascript /tmp/ts-json
 ```
 
-### 7. Instalar fuentes (dentro de Emacs)
+### 9. Instalar fuentes (dentro de Emacs)
 
 ```
 M-x nerd-icons-install-fonts RET
 M-x all-the-icons-install-fonts RET
 ```
 
-### 8. Iniciar Emacs
+### 10. Iniciar Emacs
 
 ```bash
 emacs &
@@ -276,19 +294,29 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 | `C-x g b` | magit-blame | Blame |
 | `C-x g d` | magit-diff | Diff |
 
-### Project (project.el)
+### Project (project.el + fzf)
 
 | Keybinding | Comando | Descripción |
 |------------|---------|-------------|
 | `C-x p p` | project-switch-project | Cambiar proyecto |
-| `C-x p f` | project-find-file | Buscar archivo |
-| `C-x p g` | project-find-regexp | Buscar texto |
+| `C-x p f` | zeta/fzf-project-find-file | Buscar archivo (fzf + fdfind) |
+| `C-x p g` | zeta/fzf-project-grep | Buscar texto live (fzf + rg) |
 | `C-x p b` | project-switch-to-buffer | Cambiar buffer |
 | `C-x p d` | project-find-dir | Buscar directorio |
 | `C-x p s` | project-shell | Shell en proyecto |
 | `C-x p e` | project-eshell | Eshell en proyecto |
 | `C-x p c` | project-compile | Compilar |
 | `C-x p k` | project-kill-buffers | Cerrar buffers |
+
+> `C-x p f` usa `fdfind` que respeta `.gitignore` automáticamente.
+> `C-x p g` usa ripgrep con búsqueda live (resultados mientras escribes).
+
+### fzf (global)
+
+| Keybinding | Comando | Descripción |
+|------------|---------|-------------|
+| `C-c z` | zeta/fzf-find-file | Buscar archivo (fdfind) |
+| `C-c Z` | zeta/fzf-rg-live | Buscar texto live (rg) |
 
 ### Treemacs
 
