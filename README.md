@@ -311,12 +311,14 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 
 | Keybinding | Comando | Descripción |
 |------------|---------|-------------|
-| `C-c C-f` | zeta/typescript-format-buffer | Formatear con LSP |
+| `C-c C-f` | zeta/prettier-format-buffer | Formatear con Prettier |
+| `C-c C-e` | zeta/eslint-fix-buffer | Arreglar errores ESLint |
 | `C-c l r` | lsp-rename | Renombrar símbolo |
 | `C-c l a` | lsp-execute-code-action | Quick fix, imports |
 | `C-c l R` | lsp-find-references | Buscar referencias |
 
 > Los keybindings LSP (`C-c l ...`) son los mismos que para Python.
+> Prettier y ESLint usan automáticamente los binarios del proyecto (`node_modules/.bin/`).
 
 ### Markdown
 

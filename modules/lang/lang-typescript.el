@@ -72,31 +72,65 @@
 ;; ============================================================
 ;; ESLint via LSP
 ;; ============================================================
-(use-package lsp-eslint
-  :ensure nil  ; Part of lsp-mode
-  :after lsp-mode
-  :config
-  ;; Auto-fix on save (optional, uncomment if desired)
-  ;; (setq lsp-eslint-auto-fix-on-save t)
-  )
+(with-eval-after-load 'lsp-mode
+  ;; ESLint 9 flat config support
+  (setq lsp-eslint-experimental-use-flat-config t)
+  ;; Ensure eslint validates these file types
+  (setq lsp-eslint-validate
+        '("javascript" "javascriptreact" "typescript" "typescriptreact")))
 
 ;; ============================================================
-;; Keybindings for TypeScript
+;; Prettier formatting
 ;; ============================================================
-(defun zeta/typescript-format-buffer ()
-  "Format TypeScript buffer using LSP."
+(defun zeta/prettier-format-buffer ()
+  "Format current buffer using Prettier from project's node_modules."
   (interactive)
-  (if (bound-and-true-p lsp-mode)
-      (lsp-format-buffer)
-    (message "LSP not active")))
+  (let* ((file (buffer-file-name))
+         (project-root (locate-dominating-file file "package.json"))
+         (prettier-local (when project-root
+                           (expand-file-name "node_modules/.bin/prettier" project-root)))
+         (prettier-cmd (if (and prettier-local (file-executable-p prettier-local))
+                           prettier-local
+                         "prettier")))
+    (if (not file)
+        (message "Buffer is not visiting a file")
+      (let ((point-pos (point))
+            (window-start-pos (window-start)))
+        (shell-command-on-region
+         (point-min) (point-max)
+         (format "%s --stdin-filepath %s" prettier-cmd (shell-quote-argument file))
+         (current-buffer) t "*Prettier Errors*" t)
+        (goto-char point-pos)
+        (set-window-start (selected-window) window-start-pos)))))
 
-(with-eval-after-load 'typescript-ts-mode
-  (define-key typescript-ts-mode-map (kbd "C-c C-f") #'zeta/typescript-format-buffer))
+;; ============================================================
+;; Keybindings for TypeScript/JavaScript (via hooks)
+;; ============================================================
+(defun zeta/eslint-fix-buffer ()
+  "Fix ESLint errors in current buffer using project's eslint."
+  (interactive)
+  (let* ((file (buffer-file-name))
+         (project-root (locate-dominating-file file "package.json"))
+         (eslint-local (when project-root
+                         (expand-file-name "node_modules/.bin/eslint" project-root)))
+         (eslint-cmd (if (and eslint-local (file-executable-p eslint-local))
+                         eslint-local
+                       "eslint")))
+    (when file
+      (save-buffer)
+      (let ((output (shell-command-to-string
+                     (format "%s --fix %s" eslint-cmd (shell-quote-argument file)))))
+        (revert-buffer t t t)
+        (message "ESLint fix applied")))))
 
-(with-eval-after-load 'tsx-ts-mode
-  ;; tsx-ts-mode inherits from typescript-ts-mode, but just in case
-  (when (boundp 'tsx-ts-mode-map)
-    (define-key tsx-ts-mode-map (kbd "C-c C-f") #'zeta/typescript-format-buffer)))
+(defun zeta/ts-js-keybindings ()
+  "Set up keybindings for TypeScript/JavaScript modes."
+  (local-set-key (kbd "C-c C-f") #'zeta/prettier-format-buffer)
+  (local-set-key (kbd "C-c C-e") #'zeta/eslint-fix-buffer))
+
+(add-hook 'typescript-ts-mode-hook #'zeta/ts-js-keybindings)
+(add-hook 'tsx-ts-mode-hook #'zeta/ts-js-keybindings)
+(add-hook 'js-ts-mode-hook #'zeta/ts-js-keybindings)
 
 (provide 'lang-typescript)
 ;;; lang-typescript.el ends here
