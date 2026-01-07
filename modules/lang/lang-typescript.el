@@ -41,15 +41,28 @@
 ;; nvm.el - Per-project Node version management
 ;; ============================================================
 (use-package nvm
+  :ensure t
   :config
+  (defun zeta/nvm-version-major (version-string)
+    "Extract major version number from VERSION-STRING like '12.22.9' or 'v18.20.8'."
+    (when (string-match "v?\\([0-9]+\\)" version-string)
+      (string-to-number (match-string 1 version-string))))
+
   (defun zeta/nvm-use-for-buffer ()
-    "Activate Node version from .nvmrc if present in project."
+    "Activate Node version from .nvmrc if present and >= 20 (for LSP compatibility)."
     (when buffer-file-name
-      (let ((nvmrc (locate-dominating-file buffer-file-name ".nvmrc")))
-        (when nvmrc
-          (condition-case err
-              (nvm-use-for buffer-file-name)
-            (error (message "nvm: %s" (error-message-string err))))))))
+      (let ((nvmrc-dir (locate-dominating-file buffer-file-name ".nvmrc")))
+        (when nvmrc-dir
+          (let* ((nvmrc-file (expand-file-name ".nvmrc" nvmrc-dir))
+                 (version (string-trim (with-temp-buffer
+                                         (insert-file-contents nvmrc-file)
+                                         (buffer-string))))
+                 (major (zeta/nvm-version-major version)))
+            (if (and major (>= major 20))
+                (condition-case err
+                    (nvm-use-for buffer-file-name)
+                  (error (message "nvm: %s" (error-message-string err))))
+              (message "nvm: skipping old Node %s (need >= 20 for LSP)" version)))))))
 
   ;; Auto-activate correct Node version when opening TS/JS files
   (add-hook 'typescript-ts-mode-hook #'zeta/nvm-use-for-buffer)

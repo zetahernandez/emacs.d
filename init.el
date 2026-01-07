@@ -81,7 +81,8 @@
  '(package-selected-packages nil)
  '(package-vc-selected-packages
    '((copilot :url "https://github.com/copilot-emacs/copilot.el" :branch
-	      "main"))))
+	      "main")
+     (gptel :url "https://github.com/karthink/gptel" :branch "master"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

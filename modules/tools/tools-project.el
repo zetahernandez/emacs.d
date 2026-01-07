@@ -65,6 +65,18 @@
 ;; ============================================================
 ;; fzf.el - Fuzzy finder integration
 ;; ============================================================
+
+;; Detect fd executable (fd on macOS/Homebrew, fdfind on Debian/Ubuntu)
+(defvar zeta/fd-executable
+  (or (executable-find "fd")
+      (executable-find "fdfind")
+      "fd")
+  "The fd executable name (fd on macOS, fdfind on Debian/Ubuntu).")
+
+(defvar zeta/fd-command
+  (format "%s --type f --follow --exclude .git" zeta/fd-executable)
+  "Command to find files using fd.")
+
 (use-package fzf
   :demand t
   :config
@@ -76,19 +88,28 @@
   ;; Use ripgrep for text search
   (setq fzf/grep-command "rg --no-heading --line-number --color=never")
 
-  ;; Use fdfind for file finding (respects .gitignore)
-  (setq fzf/directory-start-command "fdfind --type f --follow --exclude .git"))
+  ;; Use fd for file finding (respects .gitignore)
+  (setq fzf/directory-start-command zeta/fd-command))
+
+;; Helper to select a non-side window (for fzf compatibility with treemacs)
+(defun zeta/select-non-side-window ()
+  "Select a window that is not a side window."
+  (when (window-parameter (selected-window) 'window-side)
+    (select-window
+     (or (window-main-window)
+         (get-largest-window nil nil t)))))
 
 ;; Project-aware fzf commands (defined after fzf loads)
 (defun zeta/fzf-project-find-file ()
-  "Find file in current project using fzf + fdfind."
+  "Find file in current project using fzf + fd."
   (interactive)
   (require 'fzf)
+  (zeta/select-non-side-window)
   (let ((project (project-current)))
     (if project
         (let ((default-directory (project-root project)))
           (fzf-with-command
-           "fdfind --type f --follow --exclude .git"
+           zeta/fd-command
            (lambda (x)
              (let ((f (expand-file-name x default-directory)))
                (when (file-exists-p f)
@@ -113,6 +134,7 @@
   "Live ripgrep search in current project using fzf."
   (interactive)
   (require 'fzf)
+  (zeta/select-non-side-window)
   (let ((project (project-current)))
     (if project
         (let* ((default-directory (project-root project))
@@ -142,11 +164,12 @@
 
 ;; Global fzf bindings
 (defun zeta/fzf-find-file ()
-  "Find file in current directory using fzf + fdfind."
+  "Find file in current directory using fzf + fd."
   (interactive)
   (require 'fzf)
+  (zeta/select-non-side-window)
   (fzf-with-command
-   "fdfind --type f --follow --exclude .git"
+   zeta/fd-command
    (lambda (x)
      (let ((f (expand-file-name x default-directory)))
        (when (file-exists-p f)
@@ -158,6 +181,7 @@
   "Live ripgrep search in current directory."
   (interactive)
   (require 'fzf)
+  (zeta/select-non-side-window)
   (let* ((rg-base "rg --column --line-number --no-heading --color=always --smart-case -- ")
          (fzf/args (concat "--ansi --disabled "
                            "--bind \"start:reload:" rg-base " {q} || true\" "

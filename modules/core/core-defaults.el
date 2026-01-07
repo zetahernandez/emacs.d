@@ -87,10 +87,10 @@
   (save-place-mode 1))
 
 ;; ============================================================
-;; Exec path from shell (para emacs --daemon)
+;; Exec path from shell (macOS GUI y daemon)
 ;; ============================================================
 (use-package exec-path-from-shell
-  :if (daemonp)
+  :if (or (daemonp) (memq window-system '(mac ns x)))
   :config
   (exec-path-from-shell-initialize))
 

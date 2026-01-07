@@ -81,17 +81,53 @@
 ;; ============================================================
 ;; Treemacs + project.el integration
 ;; ============================================================
-;; Sync treemacs when switching projects with C-x p p
-(defun zeta/treemacs-switch-to-project ()
-  "Switch treemacs to current project after project-switch-project."
-  (when (and (fboundp 'treemacs-display-current-project-exclusively)
-             (treemacs-get-local-window))
-    (treemacs-display-current-project-exclusively)))
+;; Sync treemacs when switching projects
+(defun zeta/treemacs-sync-project ()
+  "Sync treemacs to show current project if treemacs is visible."
+  (when (and (featurep 'treemacs)
+             (fboundp 'treemacs-get-local-window)
+             (fboundp 'treemacs-do-add-project-to-workspace))
+    (when-let* ((treemacs-window (treemacs-get-local-window))
+                (project (project-current))
+                (root (expand-file-name (project-root project)))
+                (name (file-name-nondirectory (directory-file-name root))))
+      ;; Clear current workspace and add only the current project
+      (treemacs-block
+       (treemacs-do-remove-project-from-workspace
+        (treemacs-project-at-point) t t)
+       (treemacs-do-add-project-to-workspace root name)))))
 
-;; Hook into project-switch-project
-(advice-add 'project-switch-project :after
-            (lambda (&rest _)
-              (run-at-time 0.1 nil #'zeta/treemacs-switch-to-project)))
+;; Alternative: Use treemacs-add-and-display-current-project-exclusively
+;; which handles the project detection from the correct buffer
+(defun zeta/treemacs-display-project ()
+  "Display current project exclusively in treemacs."
+  (when (and (featurep 'treemacs)
+             buffer-file-name)
+    (let ((project (project-current)))
+      (when project
+        (treemacs-add-and-display-current-project-exclusively)))))
+
+;; Sync after project switch (with delay to let buffer change)
+(with-eval-after-load 'treemacs
+  (advice-add 'project-switch-project :after
+              (lambda (&rest _)
+                (run-at-time 0.5 nil #'zeta/treemacs-display-project)))
+
+  ;; Also sync when opening a file in a different project
+  (defvar zeta/treemacs-last-project nil
+    "Last project shown in treemacs.")
+
+  (defun zeta/treemacs-maybe-sync ()
+    "Sync treemacs if current buffer is in a different project."
+    (when (and buffer-file-name
+               (treemacs-get-local-window))
+      (let* ((project (project-current))
+             (root (when project (expand-file-name (project-root project)))))
+        (when (and root (not (equal root zeta/treemacs-last-project)))
+          (setq zeta/treemacs-last-project root)
+          (run-at-time 0.1 nil #'zeta/treemacs-display-project)))))
+
+  (add-hook 'find-file-hook #'zeta/treemacs-maybe-sync))
 
 (provide 'tools-treemacs)
 ;;; tools-treemacs.el ends here

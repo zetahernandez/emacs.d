@@ -62,6 +62,9 @@
   ;; No mostrar sugerencias cuando hay menu de completion abierto
   (setq copilot-idle-delay 0.5)
 
+  ;; Silenciar warning de indentation offset
+  (setq copilot-indent-offset-warning-disable t)
+
   ;; Desactivar en ciertos modos
   (add-to-list 'copilot-disable-predicates
                (lambda () (bound-and-true-p corfu--frame)))
