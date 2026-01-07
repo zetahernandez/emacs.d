@@ -14,6 +14,10 @@ Configuración modular para Emacs 30.2+ con stack moderno de completion y LSP.
 - **nvm.el** - Detección automática de versión de Node por proyecto (.nvmrc)
 - **fzf** - Fuzzy finder integrado con fdfind y ripgrep para búsqueda rápida
 - **AI Copilot** - gptel (chat con Claude/Gemini) + GitHub Copilot (inline completion)
+- **Dashboard** - Pantalla de inicio con proyectos recientes, archivos y bookmarks
+- **fzf Preview** - Preview de archivos con bat y syntax highlighting (ctrl-/ toggle, ctrl-up/down scroll)
+- **Mermaid Preview** - Preview de markdown con diagramas mermaid renderizados
+- **Marksman LSP** - Autocompletado y navegación para Markdown
 
 ## Requisitos
 
@@ -24,6 +28,8 @@ Configuración modular para Emacs 30.2+ con stack moderno de completion y LSP.
 - fzf (fuzzy finder)
 - fd-find (buscador de archivos rápido)
 - ripgrep (búsqueda de texto)
+- bat (preview con syntax highlighting para fzf)
+- marksman (LSP para Markdown)
 
 ## Instalación en macOS (Apple Silicon)
 
@@ -232,9 +238,10 @@ uv tool install ruff
 ```bash
 # Pandoc - export y preview
 # macOS:
-brew install pandoc
+brew install pandoc bat marksman
 # Linux:
-# sudo apt install pandoc
+# sudo apt install pandoc bat
+# brew install marksman  # o descargar de https://github.com/artempyanykh/marksman/releases
 
 # Grip - preview estilo GitHub
 uv tool install grip
@@ -242,6 +249,8 @@ uv tool install grip
 # Mermaid CLI - diagramas (requiere Node.js 20+)
 npm install -g @mermaid-js/mermaid-cli
 ```
+
+> **Nota**: `marksman` proporciona LSP para Markdown (go to definition, completado de links, etc.).
 
 ### 7. Dependencias para TypeScript/React
 
@@ -418,6 +427,17 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 | `C-+` / `C--` | text-scale-adjust | Zoom in/out |
 | `C-0` | text-scale-adjust | Reset zoom |
 
+### Dashboard (pantalla de inicio)
+
+| Keybinding | Descripción |
+|------------|-------------|
+| `r` | Archivos recientes |
+| `p` | Proyectos |
+| `m` | Bookmarks |
+| `g` | Refrescar |
+
+> El dashboard aparece al iniciar Emacs y muestra proyectos recientes, archivos y bookmarks.
+
 ### Completion (Vertico/Consult)
 
 | Keybinding | Comando | Descripción |
@@ -499,6 +519,16 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 |------------|---------|-------------|
 | `C-c z` | zeta/fzf-find-file | Buscar archivo (fdfind) |
 | `C-c Z` | zeta/fzf-rg-live | Buscar texto live (rg) |
+| `M-s .` | zeta/search-selection-in-project | Buscar selección en proyecto |
+
+#### Dentro de fzf (controles de preview)
+
+| Keybinding | Descripción |
+|------------|-------------|
+| `Ctrl-/` | Toggle preview (bat) |
+| `Ctrl-Up` | Scroll preview arriba |
+| `Ctrl-Down` | Scroll preview abajo |
+| `C-y` | Pegar texto del clipboard |
 
 ### Treemacs
 
@@ -509,6 +539,8 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 | `C-x t 1` | treemacs-delete-other-windows | Solo treemacs |
 | `C-x t d` | treemacs-select-directory | Seleccionar directorio |
 | `C-x t C-f` | treemacs-find-file | Buscar archivo |
+
+> Treemacs se sincroniza automáticamente con el proyecto actual al abrirse o al cambiar de proyecto.
 
 ### Python
 
@@ -537,10 +569,23 @@ Los paquetes se instalarán automáticamente en el primer inicio.
 | `C-c C-p` | markdown-preview | Preview en navegador |
 | `C-c C-e` | markdown-export | Exportar |
 | `C-c C-g` | grip-mode | Preview estilo GitHub |
+| `C-c C-m` | zeta/markdown-preview-with-mermaid | Preview con mermaid renderizado |
 | `C-c C-l` | markdown-insert-link | Insertar link |
 | `C-c C-i` | markdown-insert-image | Insertar imagen |
 | `C-c C-t` | markdown-toc-generate-or-refresh-toc | Generar TOC |
 | `C-c '` | markdown-edit-code-block | Editar bloque de código |
+
+> **Nota**: `C-c C-m` genera un HTML temporal con mermaid.js y lo abre en el navegador. Los diagramas mermaid se renderizan automáticamente.
+
+### Mermaid (archivos .mmd)
+
+| Keybinding | Comando | Descripción |
+|------------|---------|-------------|
+| `C-c C-c` | mermaid-compile | Compilar archivo a imagen |
+| `C-c C-b` | mermaid-compile-buffer | Compilar buffer |
+| `C-c C-r` | mermaid-compile-region | Compilar región |
+| `C-c C-o` | mermaid-open-browser | Abrir editor live online |
+| `C-c C-d` | mermaid-open-doc | Abrir documentación |
 
 ### AI (gptel + Copilot)
 
