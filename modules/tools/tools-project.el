@@ -80,16 +80,24 @@
 (use-package fzf
   :demand t
   :config
-  (setq fzf/args "-x --print-query --margin=1,0 --no-hscroll"
+  (setq fzf/args (concat "-x --print-query --margin=1,0 --no-hscroll "
+                         "--preview 'bat --color=always --style=numbers {} 2>/dev/null || cat {}' "
+                         "--preview-window 'right:50%:hidden' "
+                         "--bind 'ctrl-/:toggle-preview,ctrl-up:preview-up,ctrl-down:preview-down'")
         fzf/executable "fzf"
         fzf/position-bottom t
-        fzf/window-height 15)
+        fzf/window-height 25)  ; más alto para ver preview
 
   ;; Use ripgrep for text search
   (setq fzf/grep-command "rg --no-heading --line-number --color=never")
 
   ;; Use fd for file finding (respects .gitignore)
   (setq fzf/directory-start-command zeta/fd-command))
+
+;; Enable paste (C-y) in term-mode (used by fzf)
+(add-hook 'term-mode-hook
+          (lambda ()
+            (define-key term-raw-map (kbd "C-y") 'term-paste)))
 
 ;; Helper to select a non-side window (for fzf compatibility with treemacs)
 (defun zeta/select-non-side-window ()
@@ -139,11 +147,14 @@
     (if project
         (let* ((default-directory (project-root project))
                (rg-base "rg --column --line-number --no-heading --color=always --smart-case -- ")
-               ;; Override fzf args for live reload mode
+               ;; Override fzf args for live reload mode with preview
                (fzf/args (concat "--ansi --disabled "
                                  "--bind \"start:reload:" rg-base " {q} || true\" "
                                  "--bind \"change:reload:sleep 0.05; " rg-base " {q} || true\" "
                                  "--delimiter : "
+                                 "--preview 'bat --color=always --style=numbers --highlight-line {2} {1} 2>/dev/null || cat {1}' "
+                                 "--preview-window 'right:50%:hidden:+{2}-5' "
+                                 "--bind 'ctrl-/:toggle-preview,ctrl-up:preview-up,ctrl-down:preview-down' "
                                  "--print-query --margin=1,0 --no-hscroll")))
           (fzf--start default-directory #'zeta/fzf-rg-action))
       (user-error "Not in a project"))))
@@ -187,9 +198,27 @@
                            "--bind \"start:reload:" rg-base " {q} || true\" "
                            "--bind \"change:reload:sleep 0.05; " rg-base " {q} || true\" "
                            "--delimiter : "
+                           "--preview 'bat --color=always --style=numbers --highlight-line {2} {1} 2>/dev/null || cat {1}' "
+                           "--preview-window 'right:50%:hidden:+{2}-5' "
+                           "--bind 'ctrl-/:toggle-preview,ctrl-up:preview-up,ctrl-down:preview-down' "
                            "--print-query --margin=1,0 --no-hscroll")))
     (fzf--start default-directory #'zeta/fzf-rg-action)))
 (global-set-key (kbd "C-c Z") #'zeta/fzf-rg-live)
+
+;; ============================================================
+;; Search selection in project
+;; ============================================================
+(defun zeta/search-selection-in-project ()
+  "Search for selected text in current project using ripgrep."
+  (interactive)
+  (let ((query (if (use-region-p)
+                   (buffer-substring-no-properties (region-beginning) (region-end))
+                 (thing-at-point 'symbol t))))
+    (if query
+        (consult-ripgrep (project-root (project-current t)) query)
+      (consult-ripgrep (project-root (project-current t))))))
+
+(global-set-key (kbd "M-s .") #'zeta/search-selection-in-project)
 
 (provide 'tools-project)
 ;;; tools-project.el ends here

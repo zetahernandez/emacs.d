@@ -18,6 +18,9 @@
 ;; Evitar flash blanco al iniciar
 (push '(background-color . "#1e1e1e") default-frame-alist)
 
+;; Maximizar ventana al iniciar
+(push '(fullscreen . maximized) default-frame-alist)
+
 ;; No mostrar mensaje de startup
 (setq inhibit-startup-message t)
 

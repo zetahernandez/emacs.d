@@ -113,6 +113,12 @@
               (lambda (&rest _)
                 (run-at-time 0.5 nil #'zeta/treemacs-display-project)))
 
+  ;; Sync when opening treemacs
+  (advice-add 'treemacs :after
+              (lambda (&rest _)
+                (when (project-current)
+                  (run-at-time 0.5 nil #'zeta/treemacs-display-project))))
+
   ;; Also sync when opening a file in a different project
   (defvar zeta/treemacs-last-project nil
     "Last project shown in treemacs.")
@@ -125,7 +131,7 @@
              (root (when project (expand-file-name (project-root project)))))
         (when (and root (not (equal root zeta/treemacs-last-project)))
           (setq zeta/treemacs-last-project root)
-          (run-at-time 0.1 nil #'zeta/treemacs-display-project)))))
+          (run-at-time 0.5 nil #'zeta/treemacs-display-project)))))
 
   (add-hook 'find-file-hook #'zeta/treemacs-maybe-sync))
 
