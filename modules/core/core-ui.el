@@ -27,7 +27,8 @@
                 term-mode-hook
                 shell-mode-hook
                 eshell-mode-hook
-                treemacs-mode-hook))
+                treemacs-mode-hook
+                dashboard-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 ;; ============================================================
@@ -80,6 +81,41 @@
 ;; Nerd icons (alternativa más moderna)
 (use-package nerd-icons
   :if (display-graphic-p))
+
+;; ============================================================
+;; Dashboard (startup screen)
+;; ============================================================
+(use-package dashboard
+  :after nerd-icons
+  :config
+  ;; Usar project.el como backend de proyectos
+  (setq dashboard-projects-backend 'project-el)
+
+  ;; Widgets a mostrar
+  (setq dashboard-items '((recents   . 8)
+                          (projects  . 5)
+                          (bookmarks . 5)))
+
+  ;; Iconos con nerd-icons
+  (setq dashboard-icon-type 'nerd-icons)
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+
+  ;; Centrar contenido
+  (setq dashboard-center-content t)
+
+  ;; Banner
+  (setq dashboard-banner-logo-title "Welcome to Emacs")
+  (setq dashboard-startup-banner 'logo)
+
+  ;; Footer
+  (setq dashboard-set-footer nil)
+
+  ;; Navegación
+  (setq dashboard-set-navigator t)
+
+  ;; Activar dashboard
+  (dashboard-setup-startup-hook))
 
 ;; ============================================================
 ;; Which-key (mostrar keybindings disponibles)
