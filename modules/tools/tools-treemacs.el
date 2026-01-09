@@ -107,33 +107,87 @@
       (when project
         (treemacs-add-and-display-current-project-exclusively)))))
 
-;; Sync after project switch (with delay to let buffer change)
+;; ============================================================
+;; Auto-sync treemacs with current project
+;; ============================================================
 (with-eval-after-load 'treemacs
-  (advice-add 'project-switch-project :after
-              (lambda (&rest _)
-                (run-at-time 0.5 nil #'zeta/treemacs-display-project)))
-
-  ;; Sync when opening treemacs
-  (advice-add 'treemacs :after
-              (lambda (&rest _)
-                (when (project-current)
-                  (run-at-time 0.5 nil #'zeta/treemacs-display-project))))
-
-  ;; Also sync when opening a file in a different project
   (defvar zeta/treemacs-last-project nil
     "Last project shown in treemacs.")
 
-  (defun zeta/treemacs-maybe-sync ()
-    "Sync treemacs if current buffer is in a different project."
-    (when (and buffer-file-name
-               (treemacs-get-local-window))
-      (let* ((project (project-current))
-             (root (when project (expand-file-name (project-root project)))))
-        (when (and root (not (equal root zeta/treemacs-last-project)))
-          (setq zeta/treemacs-last-project root)
-          (run-at-time 0.5 nil #'zeta/treemacs-display-project)))))
+  (defvar zeta/treemacs-last-file-buffer nil
+    "Last buffer visiting a file.")
 
-  (add-hook 'find-file-hook #'zeta/treemacs-maybe-sync))
+  (defvar zeta/treemacs-sync-timer nil
+    "Timer for debouncing treemacs sync.")
+
+  (defun zeta/treemacs-do-sync ()
+    "Actually sync treemacs to current project."
+    (when (and zeta/treemacs-last-file-buffer
+               (buffer-live-p zeta/treemacs-last-file-buffer)
+               (treemacs-get-local-window))
+      (let ((current-window (selected-window)))
+        (with-current-buffer zeta/treemacs-last-file-buffer
+          (let* ((project (project-current))
+                 (root (when project (expand-file-name (project-root project)))))
+            (when (and root (not (equal root zeta/treemacs-last-project)))
+              (setq zeta/treemacs-last-project root)
+              (treemacs-add-and-display-current-project-exclusively)
+              ;; Restore focus to original window
+              (when (window-live-p current-window)
+                (select-window current-window))))))))
+
+  (defun zeta/treemacs-track-buffer ()
+    "Track current buffer if it's visiting a file."
+    (when buffer-file-name
+      (setq zeta/treemacs-last-file-buffer (current-buffer))))
+
+  (defun zeta/treemacs-maybe-sync ()
+    "Debounced sync of treemacs to current project."
+    ;; Track file buffers
+    (zeta/treemacs-track-buffer)
+    ;; Only sync if treemacs is visible and we have a file buffer
+    (when (and zeta/treemacs-last-file-buffer
+               (treemacs-get-local-window))
+      ;; Cancel pending timer
+      (when zeta/treemacs-sync-timer
+        (cancel-timer zeta/treemacs-sync-timer))
+      ;; Schedule new sync with debounce
+      (setq zeta/treemacs-sync-timer
+            (run-at-time 0.2 nil #'zeta/treemacs-do-sync))))
+
+  ;; Sync when buffer changes in a window (Emacs 27+)
+  (add-hook 'window-buffer-change-functions
+            (lambda (_frame)
+              (zeta/treemacs-maybe-sync)))
+
+  ;; Also track on file open
+  (add-hook 'find-file-hook #'zeta/treemacs-track-buffer)
+
+  ;; Sync when opening treemacs - use buffer before treemacs opens
+  (defvar zeta/treemacs-return-window nil
+    "Window to return to after opening treemacs.")
+
+  (advice-add 'treemacs :before
+              (lambda (&rest _)
+                (zeta/treemacs-track-buffer)
+                (setq zeta/treemacs-return-window (selected-window))))
+
+  (advice-add 'treemacs :after
+              (lambda (&rest _)
+                (setq zeta/treemacs-last-project nil)  ; Force sync
+                (run-at-time 0.1 nil
+                             (lambda ()
+                               (zeta/treemacs-do-sync)
+                               ;; Return focus to original window
+                               (when (and zeta/treemacs-return-window
+                                          (window-live-p zeta/treemacs-return-window))
+                                 (select-window zeta/treemacs-return-window))))))
+
+  ;; Sync after project switch
+  (advice-add 'project-switch-project :after
+              (lambda (&rest _)
+                (setq zeta/treemacs-last-project nil)
+                (run-at-time 0.3 nil #'zeta/treemacs-do-sync))))
 
 (provide 'tools-treemacs)
 ;;; tools-treemacs.el ends here
