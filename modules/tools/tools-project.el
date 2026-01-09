@@ -77,14 +77,25 @@
   (format "%s --type f --follow --exclude .git" zeta/fd-executable)
   "Command to find files using fd.")
 
+;; Detect bat executable (bat on macOS/Arch, batcat on Debian/Ubuntu)
+(defvar zeta/bat-executable
+  (or (executable-find "bat")
+      (executable-find "batcat")
+      "cat")
+  "The bat executable name (bat on macOS, batcat on Debian/Ubuntu).")
+
+;; Detect fzf executable
+(defvar zeta/fzf-executable
+  (or (executable-find "fzf")
+      (expand-file-name "~/dev/github.com/junegunn/fzf/bin/fzf"))
+  "The fzf executable path.")
+
 (use-package fzf
   :demand t
   :config
-  (setq fzf/args (concat "-x --print-query --margin=1,0 --no-hscroll "
-                         "--preview 'bat --color=always --style=numbers {} 2>/dev/null || cat {}' "
-                         "--preview-window 'right:50%:hidden' "
-                         "--bind 'ctrl-/:toggle-preview,ctrl-up:preview-up,ctrl-down:preview-down'")
-        fzf/executable "fzf"
+  (setq fzf/args (format "--print-query --margin=1,0 --no-hscroll --preview '%s --color=always --style=numbers {} 2>/dev/null || cat {}' --preview-window right:50%%:hidden --bind ctrl-/:toggle-preview"
+                        zeta/bat-executable)
+        fzf/executable zeta/fzf-executable
         fzf/position-bottom t
         fzf/window-height 25)  ; más alto para ver preview
 
@@ -147,15 +158,8 @@
     (if project
         (let* ((default-directory (project-root project))
                (rg-base "rg --column --line-number --no-heading --color=always --smart-case -- ")
-               ;; Override fzf args for live reload mode with preview
-               (fzf/args (concat "--ansi --disabled "
-                                 "--bind \"start:reload:" rg-base " {q} || true\" "
-                                 "--bind \"change:reload:sleep 0.05; " rg-base " {q} || true\" "
-                                 "--delimiter : "
-                                 "--preview 'bat --color=always --style=numbers --highlight-line {2} {1} 2>/dev/null || cat {1}' "
-                                 "--preview-window 'right:50%:hidden:+{2}-5' "
-                                 "--bind 'ctrl-/:toggle-preview,ctrl-up:preview-up,ctrl-down:preview-down' "
-                                 "--print-query --margin=1,0 --no-hscroll")))
+               (fzf/args (format "--ansi --disabled --bind 'start:reload:%s {q} || true' --bind 'change:reload:sleep 0.05; %s {q} || true' --delimiter : --preview '%s --color=always --highlight-line {2} {1} 2>/dev/null || cat {1}' --preview-window right:50%%:hidden --bind ctrl-/:toggle-preview --print-query --margin=1,0 --no-hscroll"
+                                 rg-base rg-base zeta/bat-executable)))
           (fzf--start default-directory #'zeta/fzf-rg-action))
       (user-error "Not in a project"))))
 
@@ -194,14 +198,8 @@
   (require 'fzf)
   (zeta/select-non-side-window)
   (let* ((rg-base "rg --column --line-number --no-heading --color=always --smart-case -- ")
-         (fzf/args (concat "--ansi --disabled "
-                           "--bind \"start:reload:" rg-base " {q} || true\" "
-                           "--bind \"change:reload:sleep 0.05; " rg-base " {q} || true\" "
-                           "--delimiter : "
-                           "--preview 'bat --color=always --style=numbers --highlight-line {2} {1} 2>/dev/null || cat {1}' "
-                           "--preview-window 'right:50%:hidden:+{2}-5' "
-                           "--bind 'ctrl-/:toggle-preview,ctrl-up:preview-up,ctrl-down:preview-down' "
-                           "--print-query --margin=1,0 --no-hscroll")))
+         (fzf/args (format "--ansi --disabled --bind 'start:reload:%s {q} || true' --bind 'change:reload:sleep 0.05; %s {q} || true' --delimiter : --preview '%s --color=always --highlight-line {2} {1} 2>/dev/null || cat {1}' --preview-window right:50%%:hidden --bind ctrl-/:toggle-preview --print-query --margin=1,0 --no-hscroll"
+                           rg-base rg-base zeta/bat-executable)))
     (fzf--start default-directory #'zeta/fzf-rg-action)))
 (global-set-key (kbd "C-c Z") #'zeta/fzf-rg-live)
 
